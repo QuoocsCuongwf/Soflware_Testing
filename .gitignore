@@ -1,0 +1,40 @@
+# Node.js
+node_modules/
+build/
+dist/
+.env
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+/target/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Others
+.idea/
+*.iml
+*.swp
+
+# Ignore test coverage
+coverage/
+
+# Ignore Docker
+*.pid
+docker-compose.override.yml
+
+# Ignore frontend build
+frontend/build/
+
+# Ignore backend build
+backend/target/

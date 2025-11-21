@@ -1,0 +1,84 @@
+.App {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.navbar {
+  background: #ffffff;
+  padding: 22px 50px;
+  box-shadow: 0 2px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar h1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info span {
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+.user-info strong {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #333;
+  font-size: 18px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #333;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px dashed #cbd5e0;
+  margin: 20px 0;
+}
+
+.empty-state h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  color: #2d3748;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #718096;
+  font-weight: 500;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 30px;
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  min-height: calc(100vh - 80px);
+}

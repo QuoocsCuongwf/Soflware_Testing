@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: flogin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: flogin_db
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_USER: flogin
+      MYSQL_PASSWORD: flogin123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./data.sql:/docker-entrypoint-initdb.d/data.sql
+    networks:
+      - flogin-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flogin-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flogin_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: flogin
+      SPRING_DATASOURCE_PASSWORD: flogin123
+      JWT_SECRET: 5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - flogin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/test"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flogin-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - flogin-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  flogin-network:
+    driver: bridge
