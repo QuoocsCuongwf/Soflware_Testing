@@ -38,3 +38,5 @@ frontend/build/
 
 # Ignore backend build
 backend/target/
+
+.fake
