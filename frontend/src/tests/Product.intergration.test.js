@@ -1,75 +1,73 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import fetch from 'node-fetch';
-import axios from 'axios';
 
 import ProductForm from '../components/ProductForm.js';
 import ProductList from '../components/ProductList.js';
 import ProductDetail from '../components/ProductDetail.js';
+import productService from '../services/productService.js';
+import authService from '../services/authService.js';
 
-jest.setTimeout(30000);
+// Mock services
+jest.mock('../services/productService.js');
+jest.mock('../services/authService.js');
 
-const API_BASE_URL = process.env.TEST_API_URL || 'http://localhost:8080/api';
-const LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
-const PRODUCTS_ENDPOINT = `${API_BASE_URL}/products`;
+// Mock useNavigate
+const mockedNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockedNavigate
+}));
 
-let backendReady = false;
-let sampleProductId = null;
-let backendSkipMessage = 'Backend integration tests skipped: ';
-
-beforeAll(async () => {
-  const username = process.env.TEST_USERNAME;
-  const password = process.env.TEST_PASSWORD;
-
-  if (!username || !password) {
-    backendSkipMessage += 'Thiếu biến môi trường TEST_USERNAME/TEST_PASSWORD.';
-    return;
+const mockProducts = [
+  {
+    id: 1,
+    name: 'iPhone 15 Pro',
+    description: 'Flagship smartphone 2024',
+    price: 999,
+    quantity: 5,
+    category: 'Phone',
+    imageUrl: 'https://example.com/iphone.jpg',
+    isAvailable: true,
+    createdBy: 1,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00'
+  },
+  {
+    id: 2,
+    name: 'Galaxy S24 Ultra',
+    description: 'Samsung flagship',
+    price: 1199,
+    quantity: 8,
+    category: 'Phone',
+    imageUrl: '',
+    isAvailable: true,
+    createdBy: 1,
+    createdAt: '2024-01-02T00:00:00',
+    updatedAt: '2024-01-02T00:00:00'
   }
-
-  try {
-    const loginRes = await fetch(LOGIN_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!loginRes.ok) {
-      backendSkipMessage += `Đăng nhập thất bại (status ${loginRes.status}).`;
-      return;
-    }
-
-    const loginData = await loginRes.json();
-    const token = loginData?.data?.token;
-
-    if (!token) {
-      backendSkipMessage += 'Không tìm thấy token trong response.';
-      return;
-    }
-
-    backendReady = true;
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-    window.localStorage.setItem('token', token);
-    window.localStorage.setItem('user', JSON.stringify(loginData.data));
-
-    const listRes = await fetch(PRODUCTS_ENDPOINT, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (listRes.ok) {
-      const listData = await listRes.json();
-      const firstProduct = listData?.data?.[0];
-      if (firstProduct?.id) {
-        sampleProductId = firstProduct.id;
-      }
-    }
-  } catch (error) {
-    backendSkipMessage += `Không thể kết nối backend (${error.message}).`;
-    backendReady = false;
-  }
-});
+];
 
 describe('Product integration tests', () => {
-  test('ProductForm vẫn hiển thị và validate cục bộ', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Mock authService
+    authService.getCurrentUser.mockReturnValue({ username: 'testuser', id: 1 });
+    authService.getToken.mockReturnValue('fake-token');
+    
+    // Mock localStorage
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: jest.fn(() => JSON.stringify({ username: 'testuser' })),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn()
+      },
+      writable: true
+    });
+  });
+
+  test('ProductForm hiển thị và validate cục bộ', async () => {
     render(
       <MemoryRouter>
         <ProductForm onClose={jest.fn()} />
@@ -85,15 +83,15 @@ describe('Product integration tests', () => {
     expect(quantityInput).toBeInTheDocument();
   });
 
-  test('ProductList tải dữ liệu từ backend thật', async () => {
-    if (!backendReady) {
-      console.warn(backendSkipMessage);
-      return;
-    }
+  test('ProductList tải và hiển thị danh sách sản phẩm', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: mockProducts
+    });
 
     render(
       <MemoryRouter>
-        <ProductList onLogout={() => {}} />
+        <ProductList onLogout={jest.fn()} />
       </MemoryRouter>
     );
 
@@ -105,26 +103,39 @@ describe('Product integration tests', () => {
           screen.queryByText(/Đang tải sản phẩm/i)
         ).not.toBeInTheDocument();
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
 
-    const emptyState = screen.queryByText(/Chưa có sản phẩm nào/i);
-    const productCards = document.querySelectorAll('.product-card');
-
-    expect(emptyState || productCards.length > 0).toBeTruthy();
+    // Kiểm tra sản phẩm được hiển thị
+    expect(await screen.findByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+    expect(screen.getByText(/Galaxy S24 Ultra/i)).toBeInTheDocument();
   });
 
-  test('ProductDetail hiển thị sản phẩm từ backend thật', async () => {
-    if (!backendReady || !sampleProductId) {
-      console.warn(
-        backendSkipMessage ||
-          'Backend integration tests skipped: không tìm thấy sản phẩm mẫu.'
-      );
-      return;
-    }
+  test('ProductList hiển thị empty state khi không có sản phẩm', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: []
+    });
 
     render(
-      <MemoryRouter initialEntries={[`/products/${sampleProductId}`]}>
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Chưa có sản phẩm nào/i)).toBeInTheDocument();
+    });
+  });
+
+  test('ProductDetail hiển thị chi tiết sản phẩm', async () => {
+    productService.getProductById.mockResolvedValue({
+      success: true,
+      data: mockProducts[0]
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
         <Routes>
           <Route path="/products/:id" element={<ProductDetail />} />
         </Routes>
@@ -132,7 +143,7 @@ describe('Product integration tests', () => {
     );
 
     const heading = await screen.findByRole('heading', {
-      name: /chi tiết sản phẩm/i,
+      name: /chi tiết sản phẩm/i
     });
 
     expect(heading).toBeInTheDocument();
@@ -143,7 +154,43 @@ describe('Product integration tests', () => {
           screen.queryByText(/Đang tải thông tin sản phẩm/i)
         ).not.toBeInTheDocument();
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
+
+    expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+  });
+
+  test('ProductList tìm kiếm sản phẩm', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: mockProducts
+    });
+
+    productService.searchProducts.mockResolvedValue({
+      success: true,
+      data: [mockProducts[0]]
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Tìm kiếm sản phẩm/i);
+    const searchButton = screen.getByRole('button', { name: /Tìm kiếm/i });
+
+    fireEvent.change(searchInput, { target: { value: 'iPhone' } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(productService.searchProducts).toHaveBeenCalledWith('iPhone');
+      expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Galaxy S24 Ultra/i)).not.toBeInTheDocument();
+    });
   });
 });

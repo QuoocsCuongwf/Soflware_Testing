@@ -66,6 +66,7 @@ public class AuthService {
      * Đăng nhập
      */
     public AuthResponse login(LoginRequest request) {
+        validateLoginRequest(request);
         // Xác thực người dùng
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
@@ -88,5 +89,71 @@ public class AuthService {
             user.getEmail(),
             user.getRole()
         );
+    }
+
+    private void validateLoginRequest(LoginRequest loginRequest) {
+        // Kiểm tra null và empty
+        if (loginRequest.getUsername() == null || loginRequest.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username không được để trống");
+        }
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password không được để trống");
+        }
+
+        String username = loginRequest.getUsername().trim();
+        String password = loginRequest.getPassword();
+
+        // Validate độ dài username
+        if (username.length() < 3 || username.length() > 50) {
+            throw new IllegalArgumentException("Username phải từ 3-50 ký tự");
+        }
+
+        // Validate độ dài password
+        if (password.length() < 6 || password.length() > 100) {
+            throw new IllegalArgumentException("Password phải từ 6-100 ký tự");
+        }
+
+        // Validate format username: chỉ cho phép chữ cái, số, ., -, _
+        if (!username.matches("^[A-Za-z0-9._-]+$")) {
+            throw new IllegalArgumentException("Username chỉ được chứa chữ cái, số, dấu chấm (.), dấu gạch ngang (-), dấu gạch dưới (_)");
+        }
+
+        // Validate format password: ít nhất 1 chữ cái và 1 chữ số
+        if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).+$")) {
+            throw new IllegalArgumentException("Password phải chứa ít nhất 1 chữ cái và 1 chữ số");
+        }
+
+        // Validate không có khoảng trắng ở đầu/cuối username (đã trim nên không cần)
+        // Validate không chứa khoảng trắng trong username
+        if (username.contains(" ")) {
+            throw new IllegalArgumentException("Username không được chứa khoảng trắng");
+        }
+
+        // Validate username không bắt đầu bằng ký tự đặc biệt
+        if (username.matches("^[._-].*")) {
+            throw new IllegalArgumentException("Username không được bắt đầu bằng ký tự đặc biệt (. _ -)");
+        }
+
+        // Validate username không kết thúc bằng ký tự đặc biệt
+        if (username.matches(".*[._-]$")) {
+            throw new IllegalArgumentException("Username không được kết thúc bằng ký tự đặc biệt (. _ -)");
+        }
+
+        // Validate không có nhiều ký tự đặc biệt liên tiếp
+        if (username.matches(".*[._-]{2,}.*")) {
+            throw new IllegalArgumentException("Username không được có nhiều ký tự đặc biệt liên tiếp");
+        }
+    }
+
+    public boolean validateUsername(String username) {
+        if (username == null) return false;
+        return username.matches("^[A-Za-z0-9._-]{3,50}$");
+    }
+
+    public boolean validatePassword(String password) {
+        if (password == null || password.length() < 6 || password.length() > 100) {
+            return false;
+        }
+        return password.matches("^(?=.*[A-Za-z])(?=.*\\d).+$");
     }
 }

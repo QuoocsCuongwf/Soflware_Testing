@@ -7,63 +7,8 @@ import {
   validateQuantity
 } from '../utils/validation.js';
 
-describe('Validation Utils Tests', () => {
+describe('Product Validation Utils Tests', () => {
   
-  describe('validateUsername', () => {
-    test('returns error for empty username', () => {
-      expect(validateUsername('')).toBe('Username không được để trống');
-      expect(validateUsername('  ')).toBe('Username không được để trống');
-    });
-
-    test('returns error for username less than 3 characters', () => {
-      expect(validateUsername('ab')).toBe('Username phải có ít nhất 3 ký tự');
-    });
-
-    test('returns error for username more than 50 characters', () => {
-      const longUsername = 'a'.repeat(51);
-      expect(validateUsername(longUsername)).toBe('Username không được quá 50 ký tự');
-    });
-
-    test('returns empty string for valid username', () => {
-      expect(validateUsername('user123')).toBe('');
-      expect(validateUsername('abc')).toBe('');
-    });
-  });
-
-  describe('validatePassword', () => {
-    test('returns error for empty password', () => {
-      expect(validatePassword('')).toBe('Password không được để trống');
-      expect(validatePassword('  ')).toBe('Password không được để trống');
-    });
-
-    test('returns error for password less than 6 characters', () => {
-      expect(validatePassword('12345')).toBe('Password phải có ít nhất 6 ký tự');
-    });
-
-    test('returns empty string for valid password', () => {
-      expect(validatePassword('password123')).toBe('');
-      expect(validatePassword('123456')).toBe('');
-    });
-  });
-
-  describe('validateEmail', () => {
-    test('returns error for empty email', () => {
-      expect(validateEmail('')).toBe('Email không được để trống');
-      expect(validateEmail('  ')).toBe('Email không được để trống');
-    });
-
-    test('returns error for invalid email format', () => {
-      expect(validateEmail('invalid')).toBe('Email không hợp lệ');
-      expect(validateEmail('test@')).toBe('Email không hợp lệ');
-      expect(validateEmail('@example.com')).toBe('Email không hợp lệ');
-    });
-
-    test('returns empty string for valid email', () => {
-      expect(validateEmail('test@example.com')).toBe('');
-      expect(validateEmail('user.name@domain.co.uk')).toBe('');
-    });
-  });
-
   describe('validateProductName', () => {
     test('returns error for empty product name', () => {
       expect(validateProductName('')).toBe('Tên sản phẩm không được để trống');
