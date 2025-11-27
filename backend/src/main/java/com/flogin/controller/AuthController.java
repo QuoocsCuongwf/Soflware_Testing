@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
-public class AuthController {
+public class AuthController{
 
     private final AuthService authService;
 
@@ -45,7 +45,7 @@ public class AuthController {
             return ResponseEntity.ok(new ApiResponse(true, "Đăng nhập thành công!", response));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, "Tên đăng nhập hoặc mật khẩu không đúng!"));
+                .body(new ApiResponse(false, e.getMessage()));
         }
     }
 
