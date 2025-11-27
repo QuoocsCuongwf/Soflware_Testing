@@ -1,104 +1,187 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom'; // Để test navigate nếu cần
-import axios from 'axios'; // Mock API calls
-import Login from '../../components/Login'; // Adjust path to Login component
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
+import Login from '../../src/components/Login';
+import authService from '../../src/services/authService';
 
-jest.mock('axios'); // Mock axios để test API calls mà không gọi real server
+jest.mock('../../src/services/authService');
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: jest.fn()
+}));
 
 describe('Login Component Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('Rendering và user interactions: Hiển thị form và cho phép nhập data', () => {
+  // a) Test rendering và user interactions (2 điểm)
+test('Rendering component và user interactions cơ bản', () => {
+  render(
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Login />
+    </BrowserRouter>
+  );
+
+  // Kiểm tra rendering đầy đủ - dùng getByRole để tránh duplicate
+  expect(screen.getByTestId('username-input')).toBeInTheDocument();
+  expect(screen.getByTestId('password-input')).toBeInTheDocument();
+  expect(screen.getByTestId('login-button')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /Đăng Nhập/i })).toBeInTheDocument(); // Chỉ lấy h2
+  expect(screen.getByText(/Chào mừng bạn trở lại/i)).toBeInTheDocument();
+
+  // Test user interactions - username
+  const usernameInput = screen.getByTestId('username-input');
+  fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+  expect(usernameInput.value).toBe('testuser');
+
+  // Test user interactions - password
+  const passwordInput = screen.getByTestId('password-input');
+  fireEvent.change(passwordInput, { target: { value: 'Test123' } });
+  expect(passwordInput.value).toBe('Test123');
+});
+
+  // a) Bonus: Test clear error khi user nhập lại
+  test('Clear error khi user nhập lại sau validation fail', async () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
 
-    // Check rendering với getByTestId (thêm data-testid vào code component nếu chưa có)
-    expect(screen.getByTestId('username-input')).toBeInTheDocument();
-    expect(screen.getByTestId('password-input')).toBeInTheDocument();
-    expect(screen.getByTestId('login-button')).toBeInTheDocument();
-
-    // User interactions: Enter data
-    const usernameInput = screen.getByTestId('username-input');
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    expect(usernameInput.value).toBe('testuser');
-
-    const passwordInput = screen.getByTestId('password-input');
-    fireEvent.change(passwordInput, { target: { value: 'Test123' } });
-    expect(passwordInput.value).toBe('Test123');
-  });
-
-  test('Form submission với form rỗng: Hiển thị lỗi validation client-side', async () => {
-    render(
-      <BrowserRouter>
-        <Login />
-      </BrowserRouter>
-    );
-
-    const submitButton = screen.getByTestId('login-button');
-    fireEvent.click(submitButton);
-
-    const usernameError = await screen.findByTestId('username-error'); // Ví dụ: text 'Username không được để trống'
+    // Submit form rỗng để hiển thị error
+    fireEvent.click(screen.getByTestId('login-button'));
+    
+    const usernameError = await screen.findByText('Username không được để trống');
     expect(usernameError).toBeInTheDocument();
 
-    const passwordError = await screen.findByTestId('password-error'); // Ví dụ: text 'Password không được để trống'
-    expect(passwordError).toBeInTheDocument();
-  });
-
-  test('Form submission với input hợp lệ: Gọi API và handling success messages', async () => {
-    // Mock API success
-    axios.post.mockResolvedValue({
-      data: { success: true, message: 'Đăng nhập thành công!', data: { token: 'fake-token' } }
+    // Nhập dữ liệu vào username
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
     });
 
+    // Error phải biến mất
+    expect(screen.queryByText('Username không được để trống')).not.toBeInTheDocument();
+  });
+
+  // c) Error handling client-side
+  test('Hiển thị lỗi khi submit form rỗng', async () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
 
-    const usernameInput = screen.getByTestId('username-input');
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    fireEvent.click(screen.getByTestId('login-button'));
 
-    const passwordInput = screen.getByTestId('password-input');
-    fireEvent.change(passwordInput, { target: { value: 'Test123' } });
-
-    const submitButton = screen.getByTestId('login-button');
-    fireEvent.click(submitButton);
-
-    await screen.findByTestId('login-message'); // Chờ element xuất hiện trước khi check API call
-    expect(axios.post).toHaveBeenCalledWith('/api/auth/login', { username: 'testuser', password: 'Test123' });
-    expect(screen.getByTestId('login-message')).toHaveTextContent('Đăng nhập thành công!'); // Hoặc check toast nếu dùng
-    // Check lưu token: expect(localStorage.getItem('token')).toBe('fake-token');
+    expect(await screen.findByText('Username không được để trống')).toBeInTheDocument();
+    expect(await screen.findByText('Password không được để trống')).toBeInTheDocument();
   });
 
-  test('Error handling: Hiển thị lỗi server khi API fail', async () => {
-    // Mock API error
-    axios.post.mockRejectedValue({
-      response: { data: { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng!' } }
+  // b) Success + redirect
+  test('Gọi API khi submit form hợp lệ và handling success', async () => {
+    const mockNavigate = jest.fn();
+    const mockOnLogin = jest.fn();
+    useNavigate.mockReturnValue(mockNavigate);
+
+    authService.login.mockResolvedValue({
+      success: true,
+      message: 'Đăng nhập thành công!',
+      data: { token: 'fake-token' }
     });
 
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Login onLogin={mockOnLogin} />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    await waitFor(() => {
+      expect(authService.login).toHaveBeenCalledWith('testuser', 'Test123');
+    });
+
+    await waitFor(() => {
+      expect(mockOnLogin).toHaveBeenCalled();
+    });
+    
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/products');
+    });
+  });
+
+  // b) Bonus: Test loading state
+  test('Hiển thị loading state khi đang submit', async () => {
+    authService.login.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
 
-    const usernameInput = screen.getByTestId('username-input');
-    fireEvent.change(usernameInput, { target: { value: 'wronguser' } });
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
 
-    const passwordInput = screen.getByTestId('password-input');
-    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+    fireEvent.click(screen.getByTestId('login-button'));
 
-    const submitButton = screen.getByTestId('login-button');
-    fireEvent.click(submitButton);
+    // Button phải hiển thị text loading
+    expect(await screen.findByText('Đang đăng nhập...')).toBeInTheDocument();
+  });
 
-    await screen.findByTestId('login-message'); // Chờ element xuất hiện
-    expect(axios.post).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('login-message')).toHaveTextContent('Tên đăng nhập hoặc mật khẩu không đúng!'); // Hoặc error element
+  // c) Error handling server-side
+  test('Handling error khi API fail', async () => {
+    authService.login.mockRejectedValue({
+      response: { data: { message: 'Lỗi server' } }
+    });
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    expect(await screen.findByText('Lỗi server')).toBeInTheDocument();
+  });
+
+  // c) Bonus: Test API fail không có response.data.message
+  test('Hiển thị default error message khi API fail không có message', async () => {
+    authService.login.mockRejectedValue(new Error('Network error'));
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    expect(await screen.findByText('Tên đăng nhập hoặc mật khẩu không đúng!')).toBeInTheDocument();
   });
 });
