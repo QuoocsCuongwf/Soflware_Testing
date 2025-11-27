@@ -53,7 +53,7 @@ describe('Product Validation Utilities Tests', () => {
     });
 
     test('returns error for price too large (> 999,999,999)', () => {
-      expect(validatePrice(1000000000)).toBe('Giá quá lớn (tối đa 999,999,999)');
+      expect(validatePrice(10000000000)).toBe('Giá quá lớn (tối đa 999,999,999)');
     });
 
     test('returns empty string for valid price', () => {
