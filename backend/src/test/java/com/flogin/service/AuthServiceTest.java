@@ -7,12 +7,14 @@ import com.flogin.entity.User;
 import com.flogin.repository.UserRepository;
 import com.flogin.security.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -167,5 +169,238 @@ class AuthServiceTest {
 
         assertEquals("User không tồn tại!", exception.getMessage());
         verify(userRepository).findByUsername("testuser");
+    }
+
+    @Test
+    void testLogin_WrongPassword() {
+        // Arrange
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        // Act & Assert
+        BadCredentialsException exception = assertThrows(BadCredentialsException.class, () -> {
+            authService.login(loginRequest);
+        });
+
+        assertEquals("Bad credentials", exception.getMessage());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(jwtUtils, never()).generateToken(anyString());
+    }
+
+    //Validation errors
+    @Nested
+    class LoginRequestValidationTest {
+
+        @Test
+        void testValidation_NullUsername() {
+            // Arrange
+            LoginRequest request = new LoginRequest(null, "Password123");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Username không được để trống", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_EmptyUsername() {
+            // Arrange
+            LoginRequest request = new LoginRequest("   ", "Password123");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Username không được để trống", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_NullPassword() {
+            // Arrange
+            LoginRequest request = new LoginRequest("testuser", null);
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password không được để trống", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_EmptyPassword() {
+            // Arrange
+            LoginRequest request = new LoginRequest("testuser", "   ");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password không được để trống", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_UsernameTooShort() {
+            // Arrange
+            LoginRequest request = new LoginRequest("ab", "Password123");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Username phải từ 3-50 ký tự", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_UsernameTooLong() {
+            // Arrange
+            String longUsername = "a".repeat(51);
+            LoginRequest request = new LoginRequest(longUsername, "Password123");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Username phải từ 3-50 ký tự", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_PasswordTooShort() {
+            // Arrange
+            LoginRequest request = new LoginRequest("testuser", "pass1");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password phải từ 6-100 ký tự", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_PasswordTooLong() {
+            // Arrange
+            String longPassword = "a".repeat(101);
+            LoginRequest request = new LoginRequest("testuser", longPassword);
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password phải từ 6-100 ký tự", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_UsernameInvalidCharacters() {
+            // Arrange
+            LoginRequest request = new LoginRequest("user@name", "Password123");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Username chỉ được chứa chữ cái, số, dấu chấm (.), dấu gạch ngang (-), dấu gạch dưới (_)", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_PasswordNoLetters() {
+            // Arrange
+            LoginRequest request = new LoginRequest("testuser", "123456");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password phải chứa ít nhất 1 chữ cái và 1 chữ số", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_PasswordNoDigits() {
+            // Arrange
+            LoginRequest request = new LoginRequest("testuser", "password");
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> authService.login(request));
+            assertEquals("Password phải chứa ít nhất 1 chữ cái và 1 chữ số", exception.getMessage());
+        }
+
+        @Test
+        void testValidation_UsernameStartsWithSpecialChar() {
+            // Arrange
+            LoginRequest request1 = new LoginRequest(".testuser", "Password123");
+            LoginRequest request2 = new LoginRequest("-testuser", "Password123");
+            LoginRequest request3 = new LoginRequest("_testuser", "Password123");
+
+            // Act & Assert
+            assertAll(
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request1)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request2)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request3))
+            );
+        }
+
+        @Test
+        void testValidation_UsernameEndsWithSpecialChar() {
+            // Arrange
+            LoginRequest request1 = new LoginRequest("testuser.", "Password123");
+            LoginRequest request2 = new LoginRequest("testuser-", "Password123");
+            LoginRequest request3 = new LoginRequest("testuser_", "Password123");
+
+            // Act & Assert
+            assertAll(
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request1)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request2)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request3))
+            );
+        }
+
+        @Test
+        void testValidation_UsernameConsecutiveSpecialChars() {
+            // Arrange
+            LoginRequest request1 = new LoginRequest("test..user", "Password123");
+            LoginRequest request2 = new LoginRequest("test--user", "Password123");
+            LoginRequest request3 = new LoginRequest("test__user", "Password123");
+            LoginRequest request4 = new LoginRequest("test.-user", "Password123");
+
+            // Act & Assert
+            assertAll(
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request1)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request2)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request3)),
+                    () -> assertThrows(IllegalArgumentException.class, () -> authService.login(request4))
+            );
+        }
+    }
+
+    @Nested
+    class ValidationMethodsTests {
+        @Test
+        void testValidateUsername_ValidCases() {
+            assertTrue(authService.validateUsername("user123"));
+            assertTrue(authService.validateUsername("test.user"));
+            assertTrue(authService.validateUsername("test-user"));
+            assertTrue(authService.validateUsername("test_user"));
+            assertTrue(authService.validateUsername("User.Name-123"));
+        }
+
+        @Test
+        void testValidateUsername_InvalidCases() {
+            assertFalse(authService.validateUsername("us")); // quá ngắn
+            assertFalse(authService.validateUsername("a".repeat(51))); // quá dài
+            assertFalse(authService.validateUsername("user@name")); // ký tự đặc biệt
+            assertFalse(authService.validateUsername("user name")); // khoảng trắng
+            assertFalse(authService.validateUsername("")); // trống
+            assertFalse(authService.validateUsername(null)); // null
+        }
+
+        @Test
+        void testValidatePassword_ValidCases() {
+            assertTrue(authService.validatePassword("Pass123"));
+            assertTrue(authService.validatePassword("TEST123"));
+            assertTrue(authService.validatePassword("abc123"));
+            assertTrue(authService.validatePassword("123ABC"));
+            assertTrue(authService.validatePassword("P@ssw0rd123"));
+        }
+
+        @Test
+        void testValidatePassword_InvalidCases() {
+            assertFalse(authService.validatePassword("pass")); // quá ngắn
+            assertFalse(authService.validatePassword("a".repeat(101))); // quá dài
+            assertFalse(authService.validatePassword("password")); // thiếu số
+            assertFalse(authService.validatePassword("123456")); // thiếu chữ
+            assertFalse(authService.validatePassword("")); // trống
+            assertFalse(authService.validatePassword(null)); // null
+        }
     }
 }
