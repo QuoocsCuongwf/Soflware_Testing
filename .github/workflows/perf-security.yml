@@ -103,5 +103,4 @@ jobs:
   #
   #     - name: Backend - security placeholder
   #       working-directory: backend
-  #       run: |
-  #         echo "TODO: thêm OWASP Dependency Check hoặc script test SQLi/XSS/CSRF"
+  #       run:
