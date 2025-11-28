@@ -13,7 +13,7 @@ describe('Kiểm tra Mock Component Login', () => {
 
   test('a) Kiểm tra rendering và tương tác người dùng (2 điểm): Hiển thị form và cho phép nhập dữ liệu', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
@@ -44,7 +44,7 @@ describe('Kiểm tra Mock Component Login', () => {
     });
 
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
@@ -53,7 +53,7 @@ describe('Kiểm tra Mock Component Login', () => {
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
 
     const passwordInput = screen.getByTestId('password-input');
-    fireEvent.change(passwordInput, { target: { value: 'Test123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Test123' } }); // Password HỢP LỆ
 
     const submitButton = screen.getByTestId('login-button');
     fireEvent.click(submitButton);
@@ -76,7 +76,7 @@ describe('Kiểm tra Mock Component Login', () => {
     });
 
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
@@ -85,7 +85,7 @@ describe('Kiểm tra Mock Component Login', () => {
     fireEvent.change(usernameInput, { target: { value: 'wronguser' } });
 
     const passwordInput = screen.getByTestId('password-input');
-    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+    fireEvent.change(passwordInput, { target: { value: 'Wrong123' } }); // SỬA: Password HỢP LỆ để pass validation
 
     const submitButton = screen.getByTestId('login-button');
     fireEvent.click(submitButton);
@@ -95,7 +95,7 @@ describe('Kiểm tra Mock Component Login', () => {
 
     // c) Verify mock calls (0.5 điểm)
     await waitFor(() => {
-      expect(authService.login).toHaveBeenCalledWith('wronguser', 'wrongpass');
+      expect(authService.login).toHaveBeenCalledWith('wronguser', 'Wrong123');
     });
 
     await waitFor(() => {
@@ -103,7 +103,7 @@ describe('Kiểm tra Mock Component Login', () => {
     });
   });
 
-  // c) Bonus: Verify mock được reset giữa các test
+  // c) Verify mock được reset giữa các test
   test('c) Verify mock calls - kiểm tra mock được reset', () => {
     // Mock mới cho test này
     authService.login.mockResolvedValue({
@@ -113,7 +113,7 @@ describe('Kiểm tra Mock Component Login', () => {
     });
 
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </BrowserRouter>
     );
