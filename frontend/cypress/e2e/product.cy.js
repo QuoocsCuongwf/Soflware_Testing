@@ -15,7 +15,7 @@ describe('Product Management E2E Tests', () => {
 
   beforeEach(() => {
     // Chạy trước mỗi test case
-    cy.login('testuser', '123456');
+    cy.login('KieuNam', '123456');
     productPage.visit();
   });
 
