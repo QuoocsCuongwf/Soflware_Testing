@@ -68,29 +68,30 @@ describe('Login E2E Tests', () => {
   });
 
   // c) Test error flow - Server error (0.5 điểm)
-  it('c) Nên hiển thị lỗi khi login fail (server error)', () => {
-    // Intercept API và mock error response
-    cy.intercept('POST', 'http://localhost:8080/api/auth/login', {
-      statusCode: 401,
-      body: {
-        success: false,
-        message: 'Tên đăng nhập hoặc mật khẩu không đúng!'
-      }
-    }).as('loginFail');
+it('c) Nên hiển thị lỗi khi login fail (server error)', () => {
+  // Intercept API và mock error response
+  cy.intercept('POST', 'http://localhost:8080/api/auth/login', {
+    statusCode: 401,
+    body: {
+      success: false,
+      message: 'Tên đăng nhập hoặc mật khẩu không đúng!'
+    }
+  }).as('loginFail');
 
-    cy.get('[data-testid="username-input"]').type('wronguser');
-    cy.get('[data-testid="password-input"]').type('wrongpass');
-    cy.get('[data-testid="login-button"]').click();
+  cy.get('[data-testid="username-input"]').type('wronguser');
+  cy.get('[data-testid="password-input"]').type('Wrong123'); // SỬA: thêm số để pass validation
 
-    // Chờ API call
-    cy.wait('@loginFail');
+  cy.get('[data-testid="login-button"]').click();
 
-    // Verify error message hiển thị
-    cy.contains('Tên đăng nhập hoặc mật khẩu không đúng!').should('be.visible');
-    
-    // Verify vẫn ở trang login
-    cy.url().should('include', '/login');
-  });
+  // Chờ API call
+  cy.wait('@loginFail');
+
+  // Verify error message hiển thị
+  cy.contains('Tên đăng nhập hoặc mật khẩu không đúng!').should('be.visible');
+  
+  // Verify vẫn ở trang login
+  cy.url().should('include', '/login');
+});
 
   // a) & c) Test complete login flow - Success (1 điểm)
   it('a) & c) Nên login thành công với credentials hợp lệ - Complete flow', () => {
