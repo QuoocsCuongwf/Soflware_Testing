@@ -1,5 +1,6 @@
 /**
  * Validation Utilities - Các hàm kiểm tra validation
+ * Cập nhật theo yêu cầu bài tập lớn (Assignment Requirements)
  */
 
 /**
@@ -54,14 +55,15 @@ export const validateEmail = (email) => {
 /**
  * Validate product name
  * - Không được để trống
- * - Độ dài tối đa 200 ký tự
+ * - Độ dài từ 3-100 ký tự (Cập nhật theo yêu cầu)
  */
 export const validateProductName = (name) => {
   if (!name || name.trim() === '') {
     return 'Tên sản phẩm không được để trống';
   }
-  if (name.length > 200) {
-    return 'Tên sản phẩm không được quá 200 ký tự';
+  // Yêu cầu: 3-100 ký tự
+  if (name.length < 3 || name.length > 100) {
+    return 'Tên sản phẩm phải từ 3-100 ký tự';
   }
   return '';
 };
@@ -70,6 +72,7 @@ export const validateProductName = (name) => {
  * Validate price
  * - Phải là số
  * - Phải lớn hơn 0
+ * - Nhỏ hơn hoặc bằng 999,999,999 (Cập nhật theo yêu cầu)
  */
 export const validatePrice = (price) => {
   if (price === null || price === undefined || price === '') {
@@ -82,6 +85,10 @@ export const validatePrice = (price) => {
   if (numPrice <= 0) {
     return 'Giá phải lớn hơn 0';
   }
+  // Yêu cầu: Max 999,999,999
+  if (numPrice > 999999999) {
+    return 'Giá quá lớn (tối đa 999,999,999)';
+  }
   return '';
 };
 
@@ -89,6 +96,7 @@ export const validatePrice = (price) => {
  * Validate quantity
  * - Phải là số nguyên
  * - Không được âm
+ * - Nhỏ hơn hoặc bằng 99,999 (Cập nhật theo yêu cầu)
  */
 export const validateQuantity = (quantity) => {
   if (quantity === null || quantity === undefined || quantity === '') {
@@ -103,6 +111,38 @@ export const validateQuantity = (quantity) => {
   }
   if (numQuantity < 0) {
     return 'Số lượng không được âm';
+  }
+  // Yêu cầu: Max 99,999
+  if (numQuantity > 99999) {
+    return 'Số lượng không được quá 99,999';
+  }
+  return '';
+};
+
+/**
+ * Validate description (Mới)
+ * - Tối đa 500 ký tự
+ */
+export const validateDescription = (description) => {
+  if (description && description.length > 500) {
+    return 'Mô tả không được quá 500 ký tự';
+  }
+  return '';
+};
+
+/**
+ * Validate category (Mới)
+ * - Phải thuộc danh sách cho phép
+ */
+export const validateCategory = (category) => {
+  const VALID_CATEGORIES = ['Electronics', 'Fashion', 'Food', 'Books'];
+  
+  if (!category || category.trim() === '') {
+    return 'Danh mục không được để trống';
+  }
+  
+  if (!VALID_CATEGORIES.includes(category)) {
+    return 'Danh mục không hợp lệ';
   }
   return '';
 };

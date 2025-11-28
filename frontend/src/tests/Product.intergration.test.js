@@ -50,7 +50,8 @@ const mockProducts = [
 describe('Product integration tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
     // Mock authService
     authService.getCurrentUser.mockReturnValue({ username: 'testuser', id: 1 });
     authService.getToken.mockReturnValue('fake-token');
@@ -191,6 +192,328 @@ describe('Product integration tests', () => {
       expect(productService.searchProducts).toHaveBeenCalledWith('iPhone');
       expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
       expect(screen.queryByText(/Galaxy S24 Ultra/i)).not.toBeInTheDocument();
+    });
+  });
+  // Thêm code mới tăng coverage
+
+  test('Quy trình: Thêm sản phẩm mới thành công (Integration)', async () => {
+    // 1. Setup Mock cho quy trình thêm
+    productService.getAllProducts.mockResolvedValue({ 
+      success: true, 
+      data: mockProducts 
+    });
+    productService.createProduct.mockResolvedValue({ 
+      success: true, 
+      data: { id: 3, name: 'New Product', price: 5000 } 
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    // 2. Chờ danh sách tải xong
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    // 3. Mở form thêm mới (Giả định nút có text là "Thêm sản phẩm" hoặc icon tương tự)
+    // Lưu ý: Cần đảm bảo ProductList có nút này. Tìm theo role button.
+    const addButton = screen.getByRole('button', { name: /Thêm|Create/i }); 
+    fireEvent.click(addButton);
+
+    // 4. Điền form
+    const nameInput = screen.getByLabelText(/Tên sản phẩm/i);
+    const priceInput = screen.getByLabelText(/Giá/i);
+    const quantityInput = screen.getByLabelText(/Số lượng/i);
+
+    fireEvent.change(nameInput, { target: { value: 'New Product' } });
+    fireEvent.change(priceInput, { target: { value: '5000' } });
+    fireEvent.change(quantityInput, { target: { value: '10' } });
+
+    // 5. Submit form
+    const submitButton = screen.getByRole('button', { name: /Thêm mới|Lưu/i });
+    fireEvent.click(submitButton);
+
+    // 6. Verify Service Call
+    await waitFor(() => {
+      expect(productService.createProduct).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'New Product',
+        price: 5000,
+        quantity: 10
+      }));
+    });
+
+    // 7. Verify Alert Success (Mock window.alert)
+    expect(window.alert).toHaveBeenCalledWith(expect.stringMatching(/thành công/i));
+  });
+
+  test('Quy trình: Xóa sản phẩm thành công', async () => {
+    // 1. Setup Mock
+    productService.getAllProducts.mockResolvedValue({ 
+      success: true, 
+      data: mockProducts 
+    });
+    productService.deleteProduct.mockResolvedValue({ 
+      success: true 
+    });
+    
+    // Mock window.confirm luôn trả về true
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    // 2. Chờ danh sách tải xong
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    // 3. Click nút xóa của sản phẩm đầu tiên
+    const deleteButtons = screen.getAllByRole('button', { name: /Xóa|Delete/i });
+    fireEvent.click(deleteButtons[0]);
+
+    // 4. Verify Confirm Dialog
+    expect(window.confirm).toHaveBeenCalled();
+
+    // 5. Verify Service Delete Call
+    await waitFor(() => {
+      expect(productService.deleteProduct).toHaveBeenCalledWith(mockProducts[0].id);
+    });
+
+    // 6. Verify gọi lại getAllProducts để refresh list
+    expect(productService.getAllProducts).toHaveBeenCalledTimes(2); // 1 lần init, 1 lần sau khi xóa
+  });
+
+  test('Quy trình: Sửa sản phẩm (Edit Flow)', async () => {
+    // 1. Setup Mock
+    productService.getAllProducts.mockResolvedValue({ 
+      success: true, 
+      data: mockProducts 
+    });
+    productService.updateProduct.mockResolvedValue({ 
+      success: true 
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    // 2. Click nút Sửa của sản phẩm đầu tiên
+    const editButtons = screen.getAllByRole('button', { name: /Sửa|Edit/i });
+    fireEvent.click(editButtons[0]);
+
+    // 3. Verify Form mở lên với dữ liệu cũ
+    const nameInput = screen.getByLabelText(/Tên sản phẩm/i);
+    expect(nameInput.value).toBe('iPhone 15 Pro');
+
+    // 4. Thay đổi dữ liệu
+    fireEvent.change(nameInput, { target: { value: 'iPhone 15 Pro Max' } });
+
+    // 5. Submit cập nhật
+    const updateButton = screen.getByRole('button', { name: /Cập nhật|Lưu/i });
+    fireEvent.click(updateButton);
+
+    // 6. Verify Service Update Call
+    await waitFor(() => {
+      expect(productService.updateProduct).toHaveBeenCalledWith(
+        mockProducts[0].id,
+        expect.objectContaining({ name: 'iPhone 15 Pro Max' })
+      );
+    });
+  });
+
+  // Test xử lý lỗi API (Negative Case)
+  test('Hiển thị thông báo lỗi khi API trả về lỗi', async () => {
+    productService.getAllProducts.mockRejectedValue({
+      response: { data: { message: 'Lỗi máy chủ nội bộ' } }
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(productService.getAllProducts).toHaveBeenCalled();
+    });
+  });
+
+  // ...
+  // --- 4. PRODUCT DETAIL TESTS (CHI TIẾT ĐỂ TĂNG COVERAGE) ---
+  
+  test('ProductDetail: Hiển thị chi tiết sản phẩm thành công', async () => {
+    productService.getProductById.mockResolvedValue({
+      success: true,
+      data: mockProducts[0]
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Đang tải/i)).not.toBeInTheDocument();
+    });
+    
+    expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+    expect(screen.getByText(/Flagship smartphone 2024/i)).toBeInTheDocument();
+  });
+
+  test('ProductDetail: Hiển thị lỗi khi không tìm thấy sản phẩm (Success: false)', async () => {
+    // Giả lập API trả về success: false
+    productService.getProductById.mockResolvedValue({ success: false });
+
+    render(
+      <MemoryRouter initialEntries={['/products/999']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Không tìm thấy sản phẩm')).toBeInTheDocument();
+    });
+
+    // Test nút quay lại trong màn hình lỗi
+    fireEvent.click(screen.getByText(/Quay lại danh sách/i));
+    expect(mockedNavigate).toHaveBeenCalledWith('/products');
+  });
+
+  test('ProductDetail: Hiển thị lỗi khi API crash (Try/Catch)', async () => {
+    // Giả lập API chết
+    productService.getProductById.mockRejectedValue(new Error('Network Error'));
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể tải thông tin sản phẩm')).toBeInTheDocument();
+    });
+  });
+
+  test('ProductDetail: Navigation - Chuyển sang trang Edit và Back', async () => {
+    productService.getProductById.mockResolvedValue({ success: true, data: mockProducts[0] });
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    // Test nút Edit
+    fireEvent.click(screen.getByText(/Chỉnh sửa/i));
+    expect(mockedNavigate).toHaveBeenCalledWith('/products', { 
+      state: { editProduct: mockProducts[0] } 
+    });
+
+    // Test nút Back (ở header)
+    fireEvent.click(screen.getByText(/← Quay lại/i));
+    expect(mockedNavigate).toHaveBeenCalledWith('/products');
+  });
+
+  test('ProductDetail: Xóa thất bại (Người dùng hủy Confirm)', async () => {
+    productService.getProductById.mockResolvedValue({ success: true, data: mockProducts[0] });
+    
+    // Giả lập user bấm Cancel
+    window.confirm.mockReturnValue(false);
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    fireEvent.click(screen.getByText(/Xóa sản phẩm/i));
+    
+    // Xác nhận service xóa KHÔNG được gọi
+    expect(productService.deleteProduct).not.toHaveBeenCalled();
+  });
+
+  test('ProductDetail: Xóa thất bại (API Error)', async () => {
+    productService.getProductById.mockResolvedValue({ success: true, data: mockProducts[0] });
+    productService.deleteProduct.mockRejectedValue(new Error('Delete error'));
+    window.confirm.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    fireEvent.click(screen.getByText(/Xóa sản phẩm/i));
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('Không thể xóa sản phẩm!');
+    });
+  });
+
+  test('ProductDetail: Xóa thành công', async () => {
+    productService.getProductById.mockResolvedValue({ success: true, data: mockProducts[0] });
+    productService.deleteProduct.mockResolvedValue({ success: true });
+    window.confirm.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    fireEvent.click(screen.getByText(/Xóa sản phẩm/i));
+
+    await waitFor(() => {
+      expect(productService.deleteProduct).toHaveBeenCalledWith('1'); // ID string từ URL
+      expect(window.alert).toHaveBeenCalledWith('Xóa sản phẩm thành công!');
+      expect(mockedNavigate).toHaveBeenCalledWith('/products');
+    });
+  });
+
+  test('ProductDetail: Hiển thị placeholder khi không có hình ảnh', async () => {
+    // Sản phẩm không có imageUrl
+    const noImageProduct = { ...mockProducts[0], imageUrl: '' };
+    productService.getProductById.mockResolvedValue({ success: true, data: noImageProduct });
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Không có hình ảnh')).toBeInTheDocument();
     });
   });
 });
