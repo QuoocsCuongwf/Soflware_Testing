@@ -6,36 +6,69 @@
 /**
  * Validate username
  * - Không được để trống
- * - Độ dài từ 3-50 ký tự
+ * - Độ dài từ 3-20 ký tự
+ * - Chỉ chứa chữ cái, số và dấu gạch dưới
  */
 export const validateUsername = (username) => {
-  if (!username || username.trim() === '') {
+  // Check null, undefined, hoặc không phải string
+  if (!username || typeof username !== 'string' || username.trim() === '') {
     return 'Username không được để trống';
   }
-  if (username.length < 3) {
+  
+  const trimmed = username.trim();
+  
+  if (trimmed.length < 3) {
     return 'Username phải có ít nhất 3 ký tự';
   }
-  if (username.length > 50) {
-    return 'Username không được quá 50 ký tự';
+  
+  if (trimmed.length > 20) {
+    return 'Username không được vượt quá 20 ký tự';
   }
-  return '';
+  
+  // Chỉ cho phép chữ cái, số và dấu gạch dưới
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  if (!usernameRegex.test(trimmed)) {
+    return 'Username chỉ được chứa chữ cái, số và dấu gạch dưới';
+  }
+  
+  return null; // Trả về null khi hợp lệ
 };
 
 /**
  * Validate password
  * - Không được để trống
- * - Độ dài tối thiểu 6 ký tự
+ * - Độ dài từ 6-30 ký tự
+ * - Phải chứa ít nhất 1 chữ cái
+ * - Phải chứa ít nhất 1 chữ số
  */
 export const validatePassword = (password) => {
-  if (!password || password.trim() === '') {
+  // Check null, undefined, hoặc không phải string
+  if (!password || typeof password !== 'string' || password.trim() === '') {
     return 'Password không được để trống';
   }
-  if (password.length < 6) {
+  
+  const trimmed = password.trim();
+  
+  if (trimmed.length < 6) {
     return 'Password phải có ít nhất 6 ký tự';
   }
-  return '';
+  
+  if (trimmed.length > 30) {
+    return 'Password không được vượt quá 30 ký tự';
+  }
+  
+  // Phải chứa ít nhất 1 chữ cái
+  if (!/[a-zA-Z]/.test(trimmed)) {
+    return 'Password phải chứa ít nhất một chữ cái';
+  }
+  
+  // Phải chứa ít nhất 1 chữ số
+  if (!/[0-9]/.test(trimmed)) {
+    return 'Password phải chứa ít nhất một chữ số';
+  }
+  
+  return null; // Trả về null khi hợp lệ
 };
-
 /**
  * Validate email
  * - Không được để trống
