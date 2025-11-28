@@ -14,16 +14,13 @@ function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadProduct();
-  }, [id]);
-
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       setLoading(true);
       const response = await productService.getProductById(id);
       if (response.success) {
         setProduct(response.data);
+        setError(null);
       } else {
         setError('Không tìm thấy sản phẩm');
       }
@@ -33,7 +30,13 @@ function ProductDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadProduct();
+    }
+  }, [loadProduct]);
 
   const handleBack = () => {
     navigate('/products');
