@@ -43,7 +43,7 @@ jobs:
     # MATRIX cho Node – hiện tại 1 version, sau này dễ thêm
     strategy:
       matrix:
-        node-version: [ '18' ]
+        node-version: [ '20' ]
 
     defaults:
       run:
