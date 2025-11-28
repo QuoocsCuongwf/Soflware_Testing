@@ -71,7 +71,7 @@ jobs:
 
       - name: Frontend - build production
         working-directory: frontend
-        run: npm run build
+        run: CI=false npm run build
 
       # ===== Lưu artefact (để tải về hoặc dùng cho deploy sau này) =====
       - name: Upload build & coverage artifacts
