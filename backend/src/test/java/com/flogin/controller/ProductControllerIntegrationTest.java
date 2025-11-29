@@ -16,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -31,10 +32,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.hasSize;
 
 @WebMvcTest(ProductController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = false) // Tắt filter security để test logic controller nhanh gọn
 @DisplayName("Product API Integration Tests")
 public class ProductControllerIntegrationTest {
 
@@ -50,6 +50,7 @@ public class ProductControllerIntegrationTest {
     @MockBean
     private UserRepository userRepository;
 
+    // Mock các bean Security để Spring Context khởi động được
     @MockBean
     private JwtUtils jwtUtils;
     @MockBean
@@ -57,10 +58,9 @@ public class ProductControllerIntegrationTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // --- Test POST /api/products (Create) ---
+    // --- a) Test POST /api/products (Create) ---
     @Test
     @DisplayName("POST /api/products - Tạo sản phẩm mới thành công")
-    @WithMockUser(username = "testuser") 
     void testCreateProduct() throws Exception {
         // Arrange
         ProductRequest request = new ProductRequest(
@@ -75,11 +75,16 @@ public class ProductControllerIntegrationTest {
             1L, "Iphone 15", "Mô tả", new BigDecimal("30000000"), 10, "Phone", "url", true, 1L, null, null
         );
 
+        // Tạo đối tượng Authentication giả lập
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", null);
+
+        // Mock hành vi
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
         when(productService.createProduct(any(ProductRequest.class), eq(1L))).thenReturn(response);
 
         // Act & Assert
         mockMvc.perform(post("/api/products")
+                .principal(auth) // Quan trọng: Truyền Authentication vào request
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -88,7 +93,7 @@ public class ProductControllerIntegrationTest {
             .andExpect(jsonPath("$.data.name").value("Iphone 15"));
     }
 
-    // --- Test GET /api/products (Read all) ---
+    // --- b) Test GET /api/products (Read all) ---
     @Test
     @DisplayName("GET /api/products - Lấy danh sách sản phẩm")
     void testGetAllProducts() throws Exception {
@@ -108,7 +113,7 @@ public class ProductControllerIntegrationTest {
             .andExpect(jsonPath("$.data[0].name").value("Laptop"));
     }
 
-    // --- Test GET /api/products/{id} (Read one) ---
+    // --- c) Test GET /api/products/{id} (Read one) ---
     @Test
     @DisplayName("GET /api/products/{id} - Lấy chi tiết sản phẩm")
     void testGetProductById() throws Exception {
@@ -126,7 +131,7 @@ public class ProductControllerIntegrationTest {
             .andExpect(jsonPath("$.data.name").value("Laptop Dell"));
     }
 
-    // --- Test PUT /api/products/{id} (Update) ---
+    // --- d) Test PUT /api/products/{id} (Update) ---
     @Test
     @DisplayName("PUT /api/products/{id} - Cập nhật sản phẩm")
     void testUpdateProduct() throws Exception {
@@ -151,7 +156,7 @@ public class ProductControllerIntegrationTest {
             .andExpect(jsonPath("$.data.name").value("Laptop Dell Updated"));
     }
 
-    // --- Test DELETE /api/products/{id} (Delete) ---
+    // --- e) Test DELETE /api/products/{id} (Delete) ---
     @Test
     @DisplayName("DELETE /api/products/{id} - Xóa sản phẩm")
     void testDeleteProduct() throws Exception {
