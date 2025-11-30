@@ -1,4 +1,4 @@
-name: CI - Backend & Frontend (matrix ready)
+name: Complete CI Pipeline
 
 on:
   push:
@@ -7,65 +7,78 @@ on:
     branches: [ "**" ]
 
 jobs:
-  backend:
-    name: Backend - Java (Maven)
+  complete-ci:
     runs-on: ubuntu-latest
 
-    # MATRIX cho Java – hiện tại chỉ dùng 21,
-    # sau này chỉ cần thêm '17', '22', ... vào đây
+    # MySQL service cho backend test (giống docker-compose của bạn)
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: flogin_db
+          MYSQL_USER: flogin
+          MYSQL_PASSWORD: flogin123
+          MYSQL_ROOT_PASSWORD: root123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    # Matrix: hiện tại chỉ 1 version, sau này bạn chỉ cần thêm vào mảng
     strategy:
       matrix:
         java-version: [ '21' ]
-
-    defaults:
-      run:
-        working-directory: ./backend
+        node-version: [ '20' ]
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # ===== BACKEND (Java/Maven) =====
       - name: Set up JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: ${{ matrix.java-version }}
           cache: maven
 
-      - name: Build & test backend (Maven)
-        run: mvn -B clean verify
+      - name: Backend - run tests
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/flogin_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME: flogin
+          SPRING_DATASOURCE_PASSWORD: flogin123
+        run: mvn -B clean test
 
-  frontend:
-    name: Frontend - React (npm)
-    runs-on: ubuntu-latest
-    needs: backend
-
-    # MATRIX cho Node – hiện tại 1 version, sau này dễ thêm
-    strategy:
-      matrix:
-        node-version: [ '20' ]
-
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
+      # ===== FRONTEND (React) =====
       - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
+          cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies (npm ci)
+      - name: Frontend - install dependencies
+        working-directory: frontend
         run: npm ci
 
-      - name: Run frontend tests
-        run: npm test -- --watch=false
+      - name: Frontend - unit tests with coverage
+        working-directory: frontend
+        run: npm test -- --watch=false --coverage
 
-      # Tạm thời build với CI=false để không bị fail vì ESLint warning
-      - name: Build frontend
+      - name: Frontend - build production
+        working-directory: frontend
         run: CI=false npm run build
+
+      # ===== Lưu artefact (để tải về hoặc dùng cho deploy sau này) =====
+      - name: Upload build & coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-coverage
+          path: |
+            backend/target
+            frontend/build
+            frontend/coverage
