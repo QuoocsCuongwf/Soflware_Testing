@@ -7,7 +7,6 @@ import ProductDetail from '../components/ProductDetail.js';
 import productService from '../services/productService.js';
 import authService from '../services/authService.js';
 
-// Mock services
 jest.mock('../services/productService.js');
 jest.mock('../services/authService.js');
 
