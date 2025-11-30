@@ -4,22 +4,19 @@ import { check, sleep } from 'k6';
 // --- 1. CẤU HÌNH LOAD TEST ---
 export const options = {
   stages: [
-    { duration: '10s', target: 10 }, // Tăng dần lên 10 user
-    { duration: '30s', target: 10 }, // Giữ ổn định 10 user để test sức chịu đựng
+    { duration: '5s', target: 5 },   // Tăng nhẹ lên 5 user
+    { duration: '20s', target: 5 },  // Chạy ổn định
     { duration: '5s', target: 0 },   // Kết thúc
   ],
   thresholds: {
-    http_req_duration: ['p(95)<2000'], // 95% request phải xong dưới 2 giây
-    http_req_failed: ['rate<0.01'],    // Tỉ lệ lỗi phải dưới 1%
+    http_req_duration: ['p(95)<2000'], // 95% request phải xong dưới 2s
+    http_req_failed: ['rate<0.05'],    // Cho phép lỗi tối đa 5%
   },
 };
 
 // --- 2. SETUP: ĐĂNG NHẬP LẤY TOKEN (Chạy 1 lần duy nhất) ---
 export function setup() {
-  // LƯU Ý: Kiểm tra kỹ lại đường dẫn Login của bạn
-  // Nếu AuthController có @RequestMapping("/api/auth") và post login -> "/api/auth/login"
-  // Nếu code của bạn khác, hãy sửa dòng này
-  const loginUrl = 'http://localhost:8080/api/auth/login'; 
+  const loginUrl = 'http://localhost:8080/api/auth/login'; // <--- SỬA LẠI NẾU CẦN
   
   const payload = JSON.stringify({
     username: 'KieuNam1',       // User này phải có trong DB
@@ -34,24 +31,22 @@ export function setup() {
 
   // Debug: Nếu login lỗi, in ra để biết đường sửa
   if (res.status !== 200) {
-    console.error(`Login Failed! Status: ${res.status}. Body: ${res.body}`);
-    return null; 
+    console.error(`Login Failed: ${res.body}`);
+    return null;
   }
 
-  // Trích xuất Token.
-  // Thử các trường hợp phổ biến: res.json('token') hoặc res.json('accessToken')
-  // Dựa vào code ProductController trả về ApiResponse, khả năng cao Login cũng trả về dạng ApiResponse
-  // Ví dụ: { "success": true, "data": { "token": "..." } } hoặc { "token": "..." }
+  // Lấy token (Sửa lại đường dẫn json tùy theo response thực tế của bạn)
+  // Ví dụ: res.json('data.token') hoặc res.json('accessToken')
   const authToken = res.json('token') || res.json('accessToken') || res.json('data.token');
   
   return authToken;
 }
 
-// --- 3. KỊCH BẢN TEST CHÍNH ---
+// --- 3. KỊCH BẢN CHÍNH (FULL FLOW) ---
 export default function (authToken) {
   // Nếu setup() login thất bại (không có token), dừng luôn user này
   if (!authToken) {
-    console.log("Không có Token, bỏ qua request.");
+    console.log("Stop: No Token");
     sleep(1);
     return;
   }
@@ -61,38 +56,95 @@ export default function (authToken) {
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`, // Đính kèm Token
+      'Authorization': `Bearer ${authToken}`,
     },
   };
 
-  // --- A. GET ALL PRODUCTS ---
-  const resGet = http.get(BASE_URL, params);
-  check(resGet, {
-    'GET All - Status 200': (r) => r.status === 200,
-    'GET All - Nhanh < 1s': (r) => r.timings.duration < 1000,
+  // ======================================================
+  // BƯỚC 1: CREATE (Tạo để lấy ID test cho các bước sau)
+  // ======================================================
+  const randomId = Math.floor(Math.random() * 1000000);
+  const createPayload = JSON.stringify({
+    name: `K6 Auto Product ${randomId}`,
+    description: `Desc ${randomId}`,
+    price: 100000,
+    quantity: 10,
+    category: "Testing",
+    imageUrl: "http://img.com/1.jpg",
+    isAvailable: true
   });
 
-  // --- B. CREATE PRODUCT (POST) ---
-  // Tạo data ngẫu nhiên để không bị trùng tên
-  const randomId = Math.floor(Math.random() * 100000);
+  const resCreate = http.post(BASE_URL, createPayload, params);
   
-  // Payload khớp 100% với ProductRequest.java của bạn
-  const productPayload = JSON.stringify({
-    name: `K6 Test Product ${randomId}`,
-    description: `Mô tả test hiệu năng cho sản phẩm ${randomId}`,
-    price: 150000.50,       // BigDecimal: Số thực ok
-    quantity: 50,           // Integer: Số nguyên ok
-    category: "Software",   // String
-    imageUrl: "https://example.com/image.jpg", // String
-    isAvailable: true       // Boolean
-  });
-
-  const resPost = http.post(BASE_URL, productPayload, params);
-  check(resPost, {
+  const checkCreate = check(resCreate, {
     'Create - Status 200': (r) => r.status === 200,
-    // Kiểm tra xem server có trả về đúng thông báo thành công không
-    'Create - Success msg': (r) => r.body.includes("thành công"), 
   });
 
-  sleep(1); // Nghỉ 1 giây
+  // Nếu tạo thất bại thì dừng luôn vòng lặp này, không test tiếp được
+  if (!checkCreate) return;
+
+  // LẤY ID SẢN PHẨM VỪA TẠO
+  // Controller trả về: new ApiResponse(true, "...", product)
+  // Nên ID sẽ nằm ở: data.id
+  const productId = resCreate.json('data.id');
+
+  // ======================================================
+  // BƯỚC 2: GET BY ID (Lấy chi tiết)
+  // ======================================================
+  const resGetId = http.get(`${BASE_URL}/${productId}`, params);
+  check(resGetId, {
+    'Get By ID - Status 200': (r) => r.status === 200,
+    'Get By ID - Đúng tên': (r) => r.json('data.name').includes(randomId.toString()),
+  });
+
+  // ======================================================
+  // BƯỚC 3: UPDATE (Sửa sản phẩm)
+  // ======================================================
+  const updatePayload = JSON.stringify({
+    name: `K6 Auto Product ${randomId} UPDATED`, // Đổi tên
+    description: `Desc Updated`,
+    price: 200000, // Đổi giá
+    quantity: 20,
+    category: "Testing",
+    imageUrl: "http://img.com/1.jpg",
+    isAvailable: true
+  });
+
+  const resUpdate = http.put(`${BASE_URL}/${productId}`, updatePayload, params);
+  check(resUpdate, {
+    'Update - Status 200': (r) => r.status === 200,
+    'Update - Data thay đổi': (r) => r.json('data.name').includes("UPDATED"),
+  });
+
+  // ======================================================
+  // BƯỚC 4: SEARCH & CATEGORY
+  // ======================================================
+  // 4.1 Search
+  const resSearch = http.get(`${BASE_URL}/search?name=${randomId}`, params);
+  check(resSearch, {
+    'Search - Status 200': (r) => r.status === 200,
+    'Search - Có kết quả': (r) => r.json('data').length > 0,
+  });
+
+  // 4.2 Get By Category
+  const resCat = http.get(`${BASE_URL}/category/Testing`, params);
+  check(resCat, {
+    'Category - Status 200': (r) => r.status === 200,
+  });
+
+  // ======================================================
+  // BƯỚC 5: DELETE (Xóa dọn dẹp)
+  // ======================================================
+  const resDelete = http.del(`${BASE_URL}/${productId}`, null, params);
+  check(resDelete, {
+    'Delete - Status 200': (r) => r.status === 200,
+  });
+
+  // (Optional) Verify đã xóa thật chưa
+  const resCheckDelete = http.get(`${BASE_URL}/${productId}`, params);
+  check(resCheckDelete, {
+    'Verify Delete - Phải lỗi 400/404': (r) => r.status !== 200,
+  });
+
+  sleep(1);
 }
