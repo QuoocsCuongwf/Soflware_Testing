@@ -195,7 +195,9 @@ class AuthServiceTest {
         @Test
         void testValidation_NullUsername() {
             // Arrange
-            LoginRequest request = new LoginRequest(null, "Password123");
+            LoginRequest request = new LoginRequest();
+            request.setUsername(null);
+            request.setPassword("Password123");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -206,7 +208,9 @@ class AuthServiceTest {
         @Test
         void testValidation_EmptyUsername() {
             // Arrange
-            LoginRequest request = new LoginRequest("   ", "Password123");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("   ");
+            request.setPassword("Password123");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -217,7 +221,9 @@ class AuthServiceTest {
         @Test
         void testValidation_NullPassword() {
             // Arrange
-            LoginRequest request = new LoginRequest("testuser", null);
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword(null);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -228,7 +234,9 @@ class AuthServiceTest {
         @Test
         void testValidation_EmptyPassword() {
             // Arrange
-            LoginRequest request = new LoginRequest("testuser", "   ");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword("   ");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -239,7 +247,9 @@ class AuthServiceTest {
         @Test
         void testValidation_UsernameTooShort() {
             // Arrange
-            LoginRequest request = new LoginRequest("ab", "Password123");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("ab");
+            request.setPassword("Password123");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -251,7 +261,9 @@ class AuthServiceTest {
         void testValidation_UsernameTooLong() {
             // Arrange
             String longUsername = "a".repeat(51);
-            LoginRequest request = new LoginRequest(longUsername, "Password123");
+            LoginRequest request = new LoginRequest();
+            request.setUsername(longUsername);
+            request.setPassword("Password123");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -262,7 +274,9 @@ class AuthServiceTest {
         @Test
         void testValidation_PasswordTooShort() {
             // Arrange
-            LoginRequest request = new LoginRequest("testuser", "pass1");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword("pass1");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -274,7 +288,9 @@ class AuthServiceTest {
         void testValidation_PasswordTooLong() {
             // Arrange
             String longPassword = "a".repeat(101);
-            LoginRequest request = new LoginRequest("testuser", longPassword);
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword(longPassword);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -285,7 +301,9 @@ class AuthServiceTest {
         @Test
         void testValidation_UsernameInvalidCharacters() {
             // Arrange
-            LoginRequest request = new LoginRequest("user@name", "Password123");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("user@name");
+            request.setPassword("Password123");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -296,7 +314,9 @@ class AuthServiceTest {
         @Test
         void testValidation_PasswordNoLetters() {
             // Arrange
-            LoginRequest request = new LoginRequest("testuser", "123456");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword("123456");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -307,7 +327,9 @@ class AuthServiceTest {
         @Test
         void testValidation_PasswordNoDigits() {
             // Arrange
-            LoginRequest request = new LoginRequest("testuser", "password");
+            LoginRequest request = new LoginRequest();
+            request.setUsername("testuser");
+            request.setPassword("password");
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -318,9 +340,15 @@ class AuthServiceTest {
         @Test
         void testValidation_UsernameStartsWithSpecialChar() {
             // Arrange
-            LoginRequest request1 = new LoginRequest(".testuser", "Password123");
-            LoginRequest request2 = new LoginRequest("-testuser", "Password123");
-            LoginRequest request3 = new LoginRequest("_testuser", "Password123");
+            LoginRequest request1 = new LoginRequest();
+            request1.setUsername(".testuser");
+            request1.setPassword("Password123");
+            LoginRequest request2 = new LoginRequest();
+            request2.setUsername("-testuser");
+            request2.setPassword("Password123");
+            LoginRequest request3 = new LoginRequest();
+            request3.setUsername("_testuser");
+            request3.setPassword("Password123");
 
             // Act & Assert
             assertAll(
@@ -333,9 +361,15 @@ class AuthServiceTest {
         @Test
         void testValidation_UsernameEndsWithSpecialChar() {
             // Arrange
-            LoginRequest request1 = new LoginRequest("testuser.", "Password123");
-            LoginRequest request2 = new LoginRequest("testuser-", "Password123");
-            LoginRequest request3 = new LoginRequest("testuser_", "Password123");
+            LoginRequest request1 = new LoginRequest();
+            request1.setUsername("testuser.");
+            request1.setPassword("Password123");
+            LoginRequest request2 = new LoginRequest();
+            request2.setUsername("testuser-");
+            request2.setPassword("Password123");
+            LoginRequest request3 = new LoginRequest();
+            request3.setUsername("testuser_");
+            request3.setPassword("Password123");
 
             // Act & Assert
             assertAll(
@@ -348,10 +382,18 @@ class AuthServiceTest {
         @Test
         void testValidation_UsernameConsecutiveSpecialChars() {
             // Arrange
-            LoginRequest request1 = new LoginRequest("test..user", "Password123");
-            LoginRequest request2 = new LoginRequest("test--user", "Password123");
-            LoginRequest request3 = new LoginRequest("test__user", "Password123");
-            LoginRequest request4 = new LoginRequest("test.-user", "Password123");
+            LoginRequest request1 = new LoginRequest();
+            request1.setUsername("test..user");
+            request1.setPassword("Password123");
+            LoginRequest request2 = new LoginRequest();
+            request2.setUsername("test--user");
+            request2.setPassword("Password123");
+            LoginRequest request3 = new LoginRequest();
+            request3.setUsername("test__user");
+            request3.setPassword("Password123");
+            LoginRequest request4 = new LoginRequest();
+            request4.setUsername("test.-user");
+            request4.setPassword("Password123");
 
             // Act & Assert
             assertAll(
