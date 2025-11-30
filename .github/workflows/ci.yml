@@ -81,8 +81,4 @@ jobs:
           path: |
             backend/target
             frontend/build
-<<<<<<< HEAD
             frontend/coverage
-=======
-            frontend/coverage
->>>>>>> 8ff20b6ff958ac938dc3172aed1aff78b9c38d40
