@@ -22,7 +22,7 @@ export function setup() {
   const loginUrl = 'http://localhost:8080/api/auth/login'; 
   
   const payload = JSON.stringify({
-    username: 'admin',       // User này phải có trong DB
+    username: 'KieuNam1',       // User này phải có trong DB
     password: 'password123'  // Pass đúng
   });
 
