@@ -91,6 +91,7 @@ function Login({ onLogin }) {
               onChange={handleChange}
               placeholder="Nhập username"
               disabled={loading}
+              data-testid="username-input"
             />
             {errors.username && <div className="error">{errors.username}</div>}
           </div>
@@ -104,6 +105,7 @@ function Login({ onLogin }) {
               onChange={handleChange}
               placeholder="Nhập password"
               disabled={loading}
+              data-testid="password-input"
             />
             {errors.password && <div className="error">{errors.password}</div>}
           </div>
@@ -114,6 +116,7 @@ function Login({ onLogin }) {
             type="submit" 
             className="btn btn-primary btn-block"
             disabled={loading}
+            data-testid="login-button"
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
           </button>
