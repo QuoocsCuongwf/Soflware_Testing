@@ -1,0 +1,61 @@
+\section{Giới thiệu dự án}
+
+\subsection{Tổng quan}
+Dự án xây dựng hệ thống Full-Stack Web Application với chức năng Authentication và Product Management. Hệ thống bao gồm:
+
+\begin{itemize}
+    \item \textbf{Frontend:} React 18 với React Router, Axios
+    \item \textbf{Backend:} Spring Boot 3.x với Spring Security, JWT
+    \item \textbf{Database:} MySQL
+    \item \textbf{Testing:} Jest, React Testing Library (Frontend), JUnit 5, Mockito (Backend)
+\end{itemize}
+
+\subsection{Kiến trúc hệ thống}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Layer} & \textbf{Technologies} \\
+\hline
+Presentation Layer & React, React Router, CSS \\
+\hline
+API Layer & REST API, Spring Boot Controllers \\
+\hline
+Business Logic Layer & Services, Validation \\
+\hline
+Data Access Layer & Repositories, database \\
+\hline
+Security Layer & JWT, BCrypt, Spring Security \\
+\hline
+\end{tabular}
+\caption{Kiến trúc hệ thống}
+\end{table}
+
+\subsection{Chức năng chính}
+
+\subsubsection{Authentication Module}
+\begin{itemize}
+    \item Đăng ký tài khoản (Register)
+    \item Đăng nhập (Login) với JWT token
+    \item Validation: username (3-20 chars), password (6-30 chars, có chữ và số)
+\end{itemize}
+
+\subsubsection{Product Management Module}
+\begin{itemize}
+    \item Xem danh sách sản phẩm (GET /api/products)
+    \item Thêm sản phẩm mới (POST /api/products)
+    \item Cập nhật sản phẩm (PUT /api/products/:id)
+    \item Xóa sản phẩm (DELETE /api/products/:id)
+    \item Tìm kiếm sản phẩm theo tên
+    \item Validation: name (min 3 chars), price (> 0), quantity (>= 0, integer)
+\end{itemize}
+
+\subsection{Môi trường phát triển}
+\begin{itemize}
+    \item Node.js 18.x
+    \item Java 17
+    \item Maven 3.9+
+    \item MySQL 8.0
+    \item Docker \& Docker Compose
+\end{itemize}

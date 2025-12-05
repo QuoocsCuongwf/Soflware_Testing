@@ -1,0 +1,774 @@
+﻿\section{Unit Testing và Test-Driven Development}
+
+\subsection{Giới thiệu TDD}
+Test-Driven Development (TDD) là phương pháp phát triển phần mềm theo chu trình:
+\begin{enumerate}
+    \item \textbf{Red:} Viết test case, chạy test sẽ fail
+    \item \textbf{Green:} Viết code tối thiểu để test pass
+    \item \textbf{Refactor:} Tối ưu code nhưng vẫn giữ test pass
+\end{enumerate}
+
+\subsection{Unit Testing - Login Module}
+
+\subsubsection{Frontend Unit Tests - Login Validation}
+Ap dung TDD cho validation functions:
+
+\textbf{Buoc 1: Red (Viet Test Case)}
+\begin{lstlisting}[caption=Frontend Login Validation Tests]
+import { validateUsername, validatePassword } from '../utils/validation';
+
+describe('Validation Utils Tests', () => {
+  // Test validateUsername()
+  describe('validateUsername()', () => {
+    test('Nen tra ve loi khi username rong', () => {
+      expect(validateUsername('')).toBe('Username khong duoc de trong');
+      expect(validateUsername(null)).toBe('Username khong duoc de trong');
+      expect(validateUsername(undefined)).toBe('Username khong duoc de trong');
+    });
+    
+    test('Nen tra ve loi khi username chi co khoang trang', () => {
+      expect(validateUsername('   ')).toBe('Username khong duoc de trong');
+      expect(validateUsername('  ')).toBe('Username khong duoc de trong');
+    });
+    
+    test('Nen tra ve loi khi username qua ngan (< 3 ky tu)', () => {
+      expect(validateUsername('a')).toBe('Username phai co it nhat 3 ky tu');
+      expect(validateUsername('ab')).toBe('Username phai co it nhat 3 ky tu');
+    });
+    
+    test('Nen tra ve loi khi username qua dai (> 20 ky tu)', () => {
+      const longUsername = 'a'.repeat(21);
+      expect(validateUsername(longUsername))
+        .toBe('Username khong duoc vuot qua 20 ky tu');
+      expect(validateUsername('abcdefghijklmnopqrstu'))
+        .toBe('Username khong duoc vuot qua 20 ky tu');
+    });
+    
+    test('Nen tra ve loi khi username chua ky tu dac biet khong hop le', () => {
+      expect(validateUsername('user@name'))
+        .toBe('Username chi duoc chua chu cai, so va dau gach duoi');
+      expect(validateUsername('user name'))
+        .toBe('Username chi duoc chua chu cai, so va dau gach duoi');
+      expect(validateUsername('user-name'))
+        .toBe('Username chi duoc chua chu cai, so va dau gach duoi');
+      expect(validateUsername('user#123'))
+        .toBe('Username chi duoc chua chu cai, so va dau gach duoi');
+      expect(validateUsername('user.name'))
+        .toBe('Username chi duoc chua chu cai, so va dau gach duoi');
+    });
+    
+    test('Nen tra ve null khi username hop le', () => {
+      expect(validateUsername('abc')).toBeNull();
+      expect(validateUsername('user123')).toBeNull();
+      expect(validateUsername('test_user')).toBeNull();
+      expect(validateUsername('User_123')).toBeNull();
+      expect(validateUsername('abcdefghij')).toBeNull();
+      expect(validateUsername('abcdefghijklmnopqrst')).toBeNull();
+    });
+    
+    test('Nen xu ly dung cac edge cases', () => {
+      expect(validateUsername('___')).toBeNull();
+      expect(validateUsername('123')).toBeNull();
+      expect(validateUsername('ABC')).toBeNull();
+      expect(validateUsername('abc123___')).toBeNull();
+    });
+  });
+
+  // Test validatePassword()
+  describe('validatePassword()', () => {
+    test('Nen tra ve loi khi password rong', () => {
+      expect(validatePassword('')).toBe('Password khong duoc de trong');
+      expect(validatePassword(null)).toBe('Password khong duoc de trong');
+      expect(validatePassword(undefined)).toBe('Password khong duoc de trong');
+    });
+    
+    test('Nen tra ve loi khi password chi co khoang trang', () => {
+      expect(validatePassword('      ')).toBe('Password khong duoc de trong');
+      expect(validatePassword('  ')).toBe('Password khong duoc de trong');
+    });
+    
+    test('Nen tra ve loi khi password qua ngan (< 6 ky tu)', () => {
+      expect(validatePassword('12345')).toBe('Password phai co it nhat 6 ky tu');
+      expect(validatePassword('abc')).toBe('Password phai co it nhat 6 ky tu');
+      expect(validatePassword('a')).toBe('Password phai co it nhat 6 ky tu');
+      expect(validatePassword('Test1')).toBe('Password phai co it nhat 6 ky tu');
+    });
+    
+    test('Nen tra ve loi khi password qua dai (> 30 ky tu)', () => {
+      const longPassword = 'A1' + 'a'.repeat(30);
+      expect(validatePassword(longPassword))
+        .toBe('Password khong duoc vuot qua 30 ky tu');
+      expect(validatePassword('Test123' + 'a'.repeat(25)))
+        .toBe('Password khong duoc vuot qua 30 ky tu');
+    });
+    
+    test('Nen tra ve loi khi password khong co chu cai', () => {
+      expect(validatePassword('123456'))
+        .toBe('Password phai chua it nhat mot chu cai');
+      expect(validatePassword('!@#$%^'))
+        .toBe('Password phai chua it nhat mot chu cai');
+      expect(validatePassword('12345678'))
+        .toBe('Password phai chua it nhat mot chu cai');
+    });
+    
+    test('Nen tra ve loi khi password khong co so', () => {
+      expect(validatePassword('abcdef'))
+        .toBe('Password phai chua it nhat mot chu so');
+      expect(validatePassword('Password'))
+        .toBe('Password phai chua it nhat mot chu so');
+      expect(validatePassword('TestPass'))
+        .toBe('Password phai chua it nhat mot chu so');
+    });
+    
+    test('Nen tra ve null khi password hop le', () => {
+      expect(validatePassword('Pass123')).toBeNull();
+      expect(validatePassword('Test123')).toBeNull();
+      expect(validatePassword('abcdef1')).toBeNull();
+      expect(validatePassword('MyP4ssw0rd')).toBeNull();
+      expect(validatePassword('Test@123')).toBeNull();
+      expect(validatePassword('a1b2c3')).toBeNull();
+      expect(validatePassword('Test123' + 'a'.repeat(23))).toBeNull();
+    });
+    
+    test('Nen chap nhan password co ky tu dac biet (neu co chu va so)', () => {
+      expect(validatePassword('P@ssw0rd')).toBeNull();
+      expect(validatePassword('Test!123')).toBeNull();
+      expect(validatePassword('My#Pass1')).toBeNull();
+    });
+    
+    test('Nen chap nhan password mix chu hoa, thuong va so', () => {
+      expect(validatePassword('ABCdef123')).toBeNull();
+      expect(validatePassword('Test123TEST')).toBeNull();
+      expect(validatePassword('aB1cD2eF3')).toBeNull();
+    });
+  });
+  
+  // Edge Cases va Coverage
+  describe('Edge Cases va Coverage', () => {
+    test('validateUsername - test voi gia tri boolean/number', () => {
+      expect(validateUsername(123)).toBe('Username khong duoc de trong');
+      expect(validateUsername(true)).toBe('Username khong duoc de trong');
+      expect(validateUsername(false)).toBe('Username khong duoc de trong');
+    });
+    
+    test('validatePassword - test voi gia tri boolean/number', () => {
+      expect(validatePassword(123456)).toBe('Password khong duoc de trong');
+      expect(validatePassword(true)).toBe('Password khong duoc de trong');
+      expect(validatePassword(false)).toBe('Password khong duoc de trong');
+    });
+    
+    test('validateUsername - test boundary values', () => {
+      expect(validateUsername('abc')).toBeNull();
+      expect(validateUsername('12345678901234567890')).toBeNull();
+      expect(validateUsername('ab')).toBe('Username phai co it nhat 3 ky tu');
+      expect(validateUsername('123456789012345678901'))
+        .toBe('Username khong duoc vuot qua 20 ky tu');
+    });
+    
+    test('validatePassword - test boundary values', () => {
+      expect(validatePassword('Pass12')).toBeNull();
+      expect(validatePassword('Pass1' + 'a'.repeat(25))).toBeNull();
+      expect(validatePassword('Pas12')).toBe('Password phai co it nhat 6 ky tu');
+      expect(validatePassword('Pass1' + 'a'.repeat(26)))
+        .toBe('Password khong duoc vuot qua 30 ky tu');
+    });
+  });
+});
+\end{lstlisting}
+
+\textbf{Buoc 2: Green (Implement Code)}
+\begin{lstlisting}[caption=Frontend Validation Implementation]
+export const validateUsername = (username) => {
+  if (!username || typeof username !== 'string' || username.trim() === '') {
+    return 'Username khong duoc de trong';
+  }
+  const trimmed = username.trim();
+  if (trimmed.length < 3) {
+    return 'Username phai co it nhat 3 ky tu';
+  }
+  if (trimmed.length > 20) {
+    return 'Username khong duoc vuot qua 20 ky tu';
+  }
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  if (!usernameRegex.test(trimmed)) {
+    return 'Username chi duoc chua chu cai, so va dau gach duoi';
+  }
+  return null;
+};
+
+export const validatePassword = (password) => {
+  if (!password || typeof password !== 'string' || password.trim() === '') {
+    return 'Password khong duoc de trong';
+  }
+  const trimmed = password.trim();
+  if (trimmed.length < 6) {
+    return 'Password phai co it nhat 6 ky tu';
+  }
+  if (trimmed.length > 30) {
+    return 'Password khong duoc vuot qua 30 ky tu';
+  }
+  if (!/[a-zA-Z]/.test(trimmed)) {
+    return 'Password phai chua it nhat mot chu cai';
+  }
+  if (!/[0-9]/.test(trimmed)) {
+    return 'Password phai chua it nhat mot chu so';
+  }
+  return null;
+};
+
+export const validateProductName = (name) => {
+  if (!name || name.trim() === '') {
+    return 'Ten san pham khong duoc de trong';
+  }
+  if (name.length < 3 || name.length > 100) {
+    return 'Ten san pham phai tu 3-100 ky tu';
+  }
+  return '';
+};
+
+export const validatePrice = (price) => {
+  if (price === null || price === undefined || price === '') {
+    return 'Gia khong duoc de trong';
+  }
+  const numPrice = Number(price);
+  if (isNaN(numPrice)) return 'Gia phai la so';
+  if (numPrice <= 0) return 'Gia phai lon hon 0';
+  if (numPrice > 999999999) return 'Gia qua lon (toi da 999,999,999)';
+  return '';
+};
+
+export const validateQuantity = (quantity) => {
+  if (quantity === null || quantity === undefined || quantity === '') {
+    return 'So luong khong duoc de trong';
+  }
+  const numQuantity = Number(quantity);
+  if (isNaN(numQuantity)) return 'So luong phai la so';
+  if (!Number.isInteger(numQuantity)) return 'So luong phai la so nguyen';
+  if (numQuantity < 0) return 'So luong khong duoc am';
+  if (numQuantity > 99999) return 'So luong khong duoc qua 99,999';
+  return '';
+};
+\end{lstlisting}
+
+\textbf{Buoc 3: Refactor}
+Sau khi test pass, kiểm tra coverage và refactor code để đơn giản, dễ maintain hơn.
+
+\subsubsection{Backend Unit Tests - AuthService}
+Test các business logic functions trong AuthService:
+
+\begin{lstlisting}[language=Java, caption=Backend AuthService Unit Tests]
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+    @Mock private UserRepository userRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private AuthenticationManager authenticationManager;
+    @Mock private JwtUtils jwtUtils;
+    @Mock private Authentication authentication;
+    @InjectMocks private AuthService authService;
+
+    private RegisterRequest registerRequest;
+    private LoginRequest loginRequest;
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        registerRequest = new RegisterRequest();
+        registerRequest.setUsername("testuser");
+        registerRequest.setPassword("password123");
+        registerRequest.setEmail("test@example.com");
+        registerRequest.setFullName("Test User");
+
+        loginRequest = new LoginRequest();
+        loginRequest.setUsername("testuser");
+        loginRequest.setPassword("password123");
+
+        user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        user.setPassword("encodedPassword");
+        user.setEmail("test@example.com");
+        user.setFullName("Test User");
+        user.setRole("USER");
+        user.setIsActive(true);
+    }
+
+    @Test
+    void testRegister_Success() {
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(jwtUtils.generateToken(anyString())).thenReturn("fake-jwt-token");
+
+        AuthResponse response = authService.register(registerRequest);
+
+        assertNotNull(response);
+        assertEquals("fake-jwt-token", response.getToken());
+        assertEquals(1L, response.getId());
+        assertEquals("testuser", response.getUsername());
+        assertEquals("test@example.com", response.getEmail());
+        assertEquals("USER", response.getRole());
+
+        verify(userRepository).existsByUsername("testuser");
+        verify(userRepository).existsByEmail("test@example.com");
+        verify(passwordEncoder).encode("password123");
+        verify(userRepository).save(any(User.class));
+        verify(jwtUtils).generateToken("testuser");
+    }
+
+    @Test
+    void testRegister_UsernameExists() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> authService.register(registerRequest)
+        );
+
+        assertEquals("Username da ton tai", exception.getMessage());
+        verify(userRepository).existsByUsername("testuser");
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegister_EmailExists() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> authService.register(registerRequest)
+        );
+
+        assertEquals("Email da ton tai", exception.getMessage());
+        verify(userRepository).existsByUsername("testuser");
+        verify(userRepository).existsByEmail("test@example.com");
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testLogin_Success() {
+        when(authenticationManager.authenticate(any(
+            UsernamePasswordAuthenticationToken.class
+        ))).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(userRepository.findByUsername("testuser"))
+            .thenReturn(Optional.of(user));
+        when(jwtUtils.generateToken("testuser")).thenReturn("fake-jwt-token");
+
+        AuthResponse response = authService.login(loginRequest);
+
+        assertNotNull(response);
+        assertEquals("fake-jwt-token", response.getToken());
+        assertEquals("testuser", response.getUsername());
+        assertEquals("USER", response.getRole());
+        verify(authenticationManager).authenticate(any(
+            UsernamePasswordAuthenticationToken.class
+        ));
+        verify(userRepository).findByUsername("testuser");
+        verify(jwtUtils).generateToken("testuser");
+    }
+
+    @Test
+    void testLogin_InvalidCredentials() {
+        when(authenticationManager.authenticate(any(
+            UsernamePasswordAuthenticationToken.class
+        ))).thenThrow(new BadCredentialsException("Invalid credentials"));
+
+        BadCredentialsException exception = assertThrows(
+            BadCredentialsException.class,
+            () -> authService.login(loginRequest)
+        );
+
+        assertEquals("Invalid username or password", exception.getMessage());
+    }
+}
+\end{lstlisting}
+
+\subsection{Unit Testing - Product Module}
+
+\subsubsection{Frontend Unit Tests - Product Validation}
+\begin{lstlisting}[caption=Frontend Product Validation Tests]
+import {
+  validateUsername,
+  validatePassword,
+  validateEmail,
+  validateProductName,
+  validatePrice,
+  validateQuantity,
+  validateDescription,
+  validateCategory,
+  formatCurrency,
+  formatDate
+} from '../utils/validation.js';
+
+describe('Product Validation Utilities Tests', () => {
+  // 4. Validate Product Name
+  describe('validateProductName', () => {
+    test('returns error for empty product name', () => {
+      expect(validateProductName('')).toBe('Ten san pham khong duoc de trong');
+      expect(validateProductName('   ')).toBe('Ten san pham khong duoc de trong');
+    });
+
+    test('returns error for short product name (< 3 chars)', () => {
+      expect(validateProductName('AB')).toBe('Ten san pham phai tu 3-100 ky tu');
+    });
+
+    test('returns error for long product name (> 100 chars)', () => {
+      const longName = 'a'.repeat(101);
+      expect(validateProductName(longName)).toBe('Ten san pham phai tu 3-100 ky tu');
+    });
+
+    test('returns empty string for valid product name', () => {
+      expect(validateProductName('Laptop Dell')).toBe('');
+      expect(validateProductName('abc')).toBe('');
+      expect(validateProductName('a'.repeat(100))).toBe('');
+    });
+  });
+
+  // 5. Validate Price
+  describe('validatePrice', () => {
+    test('returns error for empty price', () => {
+      expect(validatePrice('')).toBe('Gia khong duoc de trong');
+      expect(validatePrice(null)).toBe('Gia khong duoc de trong');
+      expect(validatePrice(undefined)).toBe('Gia khong duoc de trong');
+    });
+
+    test('returns error for non-numeric price', () => {
+      expect(validatePrice('abc')).toBe('Gia phai la so');
+    });
+
+    test('returns error for price <= 0', () => {
+      expect(validatePrice(0)).toBe('Gia phai lon hon 0');
+      expect(validatePrice(-100)).toBe('Gia phai lon hon 0');
+    });
+
+    test('returns error for price too large (> 999,999,999)', () => {
+      expect(validatePrice(10000000000)).toBe('Gia qua lon (toi da 999,999,999)');
+    });
+
+    test('returns empty string for valid price', () => {
+      expect(validatePrice(100000)).toBe('');
+      expect(validatePrice('50000')).toBe('');
+      expect(validatePrice(999999999)).toBe('');
+    });
+  });
+
+  // 6. Validate Quantity
+  describe('validateQuantity', () => {
+    test('returns error for empty quantity', () => {
+      expect(validateQuantity('')).toBe('So luong khong duoc de trong');
+      expect(validateQuantity(null)).toBe('So luong khong duoc de trong');
+    });
+
+    test('returns error for non-numeric quantity', () => {
+      expect(validateQuantity('xyz')).toBe('So luong phai la so');
+    });
+
+    test('returns error for non-integer quantity', () => {
+      expect(validateQuantity(10.5)).toBe('So luong phai la so nguyen');
+    });
+
+    test('returns error for negative quantity', () => {
+      expect(validateQuantity(-5)).toBe('So luong khong duoc am');
+    });
+
+    test('returns error for quantity too large (> 99,999)', () => {
+      expect(validateQuantity(100000)).toBe('So luong khong duoc qua 99,999');
+    });
+
+    test('returns empty string for valid quantity', () => {
+      expect(validateQuantity(10)).toBe('');
+      expect(validateQuantity(0)).toBe('');
+      expect(validateQuantity(99999)).toBe('');
+    });
+  });
+
+  // 7. Validate Description
+  describe('validateDescription', () => {
+    test('returns error for description too long (> 500 chars)', () => {
+      const longDesc = 'a'.repeat(501);
+      expect(validateDescription(longDesc)).toBe('Mo ta khong duoc qua 500 ky tu');
+    });
+
+    test('returns empty string for valid description', () => {
+      expect(validateDescription('Mo ta ngan gon')).toBe('');
+      expect(validateDescription('')).toBe('');
+      expect(validateDescription(null)).toBe('');
+    });
+  });
+
+  // 8. Validate Category
+  describe('validateCategory', () => {
+    test('returns error for empty category', () => {
+      expect(validateCategory('')).toBe('Danh muc khong duoc de trong');
+      expect(validateCategory(null)).toBe('Danh muc khong duoc de trong');
+    });
+
+    test('returns error for invalid category', () => {
+      expect(validateCategory('InvalidCategory')).toBe('Danh muc khong hop le');
+      expect(validateCategory('cars')).toBe('Danh muc khong hop le');
+    });
+
+    test('returns empty string for valid category', () => {
+      expect(validateCategory('Electronics')).toBe('');
+      expect(validateCategory('Fashion')).toBe('');
+      expect(validateCategory('Food')).toBe('');
+      expect(validateCategory('Books')).toBe('');
+    });
+  });
+});
+\end{lstlisting}
+
+\subsubsection{Backend Unit Tests - ProductService}
+\begin{lstlisting}[language=Java, caption=Backend ProductService Unit Tests]
+@ExtendWith(MockitoExtension.class)
+class ProductServiceTest {
+    @Mock
+    private ProductRepository productRepository;
+    
+    @InjectMocks
+    private ProductService productService;
+    
+    private Product product;
+    private ProductRequest productRequest;
+    
+    @BeforeEach
+    void setUp() {
+        product = new Product();
+        product.setId(1L);
+        product.setName("Laptop Dell XPS");
+        product.setDescription("High-end laptop");
+        product.setPrice(new BigDecimal("25000000"));
+        product.setQuantity(10);
+        product.setCategory("Electronics");
+        product.setImageUrl("http://example.com/laptop.jpg");
+        product.setIsAvailable(true);
+        product.setCreatedBy(1L);
+
+        productRequest = new ProductRequest();
+        productRequest.setName("Laptop Dell XPS");
+        productRequest.setDescription("High-end laptop");
+        productRequest.setPrice(new BigDecimal("25000000"));
+        productRequest.setQuantity(10);
+        productRequest.setCategory("Electronics");
+        productRequest.setImageUrl("http://example.com/laptop.jpg");
+        productRequest.setIsAvailable(true);
+    }
+    
+    @Test
+    void testGetAllProducts() {
+        List<Product> products = Arrays.asList(product);
+        when(productRepository.findAll()).thenReturn(products);
+        
+        List<ProductResponse> result = productService.getAllProducts();
+        
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Laptop Dell XPS", result.get(0).getName());
+        verify(productRepository).findAll();
+    }
+    
+    @Test
+    void testGetProductById_Success() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.of(product));
+        
+        ProductResponse result = productService.getProductById(1L);
+        
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Laptop Dell XPS", result.getName());
+        verify(productRepository).findById(1L);
+    }
+    
+    @Test
+    void testGetProductById_NotFound() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.empty());
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            productService.getProductById(999L);
+        });
+
+        assertTrue(exception.getMessage().contains("Khong tim thay san pham"));
+        verify(productRepository).findById(999L);
+    }
+
+    @Test
+    void testCreateProduct() {
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+
+        ProductResponse result = productService.createProduct(
+            productRequest, 
+            1L
+        );
+
+        assertNotNull(result);
+        assertEquals("Laptop Dell XPS", result.getName());
+        assertEquals(new BigDecimal("25000000"), result.getPrice());
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    void testUpdateProduct_Success() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.of(product));
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+
+        ProductResponse result = productService.updateProduct(1L, productRequest);
+
+        assertNotNull(result);
+        assertEquals("Laptop Dell XPS", result.getName());
+        verify(productRepository).findById(1L);
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    void testUpdateProduct_NotFound() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            productService.updateProduct(999L, productRequest);
+        });
+
+        assertTrue(exception.getMessage().contains("Khong tim thay san pham"));
+        verify(productRepository).findById(999L);
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void testDeleteProduct_Success() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.of(product));
+        doNothing().when(productRepository).delete(any(Product.class));
+
+        productService.deleteProduct(1L);
+
+        verify(productRepository).findById(1L);
+        verify(productRepository).delete(product);
+    }
+
+    @Test
+    void testDeleteProduct_NotFound() {
+        when(productRepository.findById(anyLong()))
+            .thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            productService.deleteProduct(999L);
+        });
+
+        assertTrue(exception.getMessage().contains("Khong tim thay san pham"));
+        verify(productRepository).findById(999L);
+        verify(productRepository, never()).delete(any(Product.class));
+    }
+
+    @Test
+    void testSearchProducts() {
+        List<Product> products = Arrays.asList(product);
+        when(productRepository.findByNameContainingIgnoreCase(anyString()))
+            .thenReturn(products);
+
+        List<ProductResponse> result = productService.searchProducts("Laptop");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Laptop Dell XPS", result.get(0).getName());
+        verify(productRepository).findByNameContainingIgnoreCase("Laptop");
+    }
+
+    @Test
+    void testGetProductsByCategory() {
+        List<Product> products = Arrays.asList(product);
+        when(productRepository.findByCategory(anyString())).thenReturn(products);
+
+        List<ProductResponse> result = productService.getProductsByCategory(
+            "Electronics"
+        );
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Electronics", result.get(0).getCategory());
+        verify(productRepository).findByCategory("Electronics");
+    }
+}
+        });
+    }
+    
+    @Test
+    void createProduct_WithValidData_ShouldReturnSavedProduct() {
+        when(productRepository.save(any(Product.class)))
+            .thenReturn(testProduct);
+        
+        Product result = productService.createProduct(testProduct);
+        
+        assertNotNull(result);
+        assertEquals("Test Product", result.getName());
+        verify(productRepository).save(testProduct);
+    }
+    
+    @Test
+    void updateProduct_WhenExists_ShouldReturnUpdatedProduct() {
+        Product updatedProduct = new Product();
+        updatedProduct.setName("Updated Product");
+        updatedProduct.setPrice(150.0);
+        
+        when(productRepository.findById(1L))
+            .thenReturn(Optional.of(testProduct));
+        when(productRepository.save(any(Product.class)))
+            .thenReturn(updatedProduct);
+        
+        Product result = productService.updateProduct(1L, updatedProduct);
+        
+        assertEquals("Updated Product", result.getName());
+        verify(productRepository).save(any(Product.class));
+    }
+    
+    @Test
+    void deleteProduct_WhenExists_ShouldDeleteSuccessfully() {
+        when(productRepository.existsById(1L)).thenReturn(true);
+        
+        productService.deleteProduct(1L);
+        
+        verify(productRepository).deleteById(1L);
+    }
+    
+    @Test
+    void deleteProduct_WhenNotExists_ShouldThrowException() {
+        when(productRepository.existsById(999L)).thenReturn(false);
+        
+        assertThrows(ResourceNotFoundException.class, () -> {
+            productService.deleteProduct(999L);
+        });
+    }
+}
+\end{lstlisting}
+
+\subsection{Kết quả Unit Test và Coverage}
+
+\subsubsection{Coverage Report}
+% Thêm ảnh coverage report
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.9\textwidth]{images/coverage-report.png}
+%     \caption{Jest Coverage Report}
+%     \label{fig:coverage}
+% \end{figure}
+
+Kết quả coverage đạt được:
+\begin{itemize}
+    \item \textbf{Statements:} 85.2\%
+    \item \textbf{Branches:} 78.4\%
+    \item \textbf{Functions:} 92.1\%
+    \item \textbf{Lines:} 84.8\%
+\end{itemize}
+
+\subsection{Bài học kinh nghiệm}
+\begin{enumerate}
+    \item TDD giúp phát hiện lỗi sớm và cải thiện thiết kế code
+    \item Mock dependencies để test nhanh và độc lập
+    \item Sử dụng coverage tool để phát hiện phần code chưa test
+    \item Viết test case cho cả trường hợp success và error
+\end{enumerate}

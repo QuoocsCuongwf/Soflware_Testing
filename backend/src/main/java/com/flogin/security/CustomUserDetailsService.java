@@ -2,7 +2,7 @@ package com.flogin.security;
 
 import com.flogin.entity.User;
 import com.flogin.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+// Removed Lombok dependency to ensure constructor is present even if Lombok processing fails
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,10 +15,13 @@ import java.util.Collections;
  * Custom User Details Service
  */
 @Service
-@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -28,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
             user.getUsername(),
             user.getPassword(),
-            user.getIsActive(),
+            Boolean.TRUE.equals(user.isIsActive()),
             true,
             true,
             true,

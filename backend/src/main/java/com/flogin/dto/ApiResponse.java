@@ -23,4 +23,48 @@ public class ApiResponse {
         this.message = message;
         this.data = data;
     }
+    
+
+    /**
+     * @return Boolean return the success
+     */
+    public Boolean isSuccess() {
+        return success;
+    }
+
+    /**
+     * @param success the success to set
+     */
+    public void setSuccess(Boolean success) {
+        this.success = success;
+    }
+
+    /**
+     * @return String return the message
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * @param message the message to set
+     */
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    /**
+     * @return Object return the data
+     */
+    public Object getData() {
+        return data;
+    }
+
+    /**
+     * @param data the data to set
+     */
+    public void setData(Object data) {
+        this.data = data;
+    }
+
 }
