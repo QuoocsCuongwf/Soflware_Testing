@@ -23,6 +23,7 @@ export function setup() {
 }
 
 export default function (authToken) {
+  // Nếu setup() login thất bại (không có token), dừng luôn user này
   if (!authToken) {
     sleep(1);
     return;
