@@ -19,10 +19,10 @@ export const options = {
 };
 
 export default function () {
-    const url = 'http://localhost:8080/auth/login';
+    const url = 'http://localhost:8080/api/auth/login';
     const payload = JSON.stringify({
-        username: 'KieuNam',
-        password: '123456',
+        username: 'testuser',
+        password: 'admin123',
     });
 
     const params = {

@@ -15,7 +15,7 @@ export const options = {
 
 export function setup() {
   const loginUrl = 'http://localhost:8080/api/auth/login';
-  const payload = JSON.stringify({ username: 'testuer', password: 'admin123' });
+  const payload = JSON.stringify({ username: 'testuser', password: 'admin123' });
   const params = { headers: { 'Content-Type': 'application/json' } };
   const res = http.post(loginUrl, payload, params);
   if (res.status !== 200) return null;

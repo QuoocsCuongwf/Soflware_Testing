@@ -162,35 +162,129 @@ export default function (authToken) {
 
 \subsubsection{Kết quả Performance Testing}
 
+\textbf{Login API Test Results (6 phút với tối đa 2000 VUs):}
 \begin{table}[H]
 \centering
-\begin{tabular}{|l|c|c|c|}
+\begin{tabular}{|l|c|}
 \hline
-\textbf{Metric} & \textbf{Login API} & \textbf{GET Products} & \textbf{POST Product} \\
+\textbf{Metric} & \textbf{Login API (Authentication)} \\
 \hline
-Avg Response Time & 180ms & 95ms & 220ms \\
+Test Duration & 6m30s (390 giây) \\
 \hline
-P95 Response Time & 420ms & 280ms & 580ms \\
+Total Iterations & 10,530 iterations (27 iter/s) \\
 \hline
-P99 Response Time & 650ms & 450ms & 890ms \\
+Total HTTP Requests & 10,550 requests (27.05 req/s) \\
 \hline
-Throughput (req/s) & 180 & 350 & 120 \\
+Avg Response Time & 22.45 giây \\
 \hline
-Error Rate & 0.2\% & 0.1\% & 0.3\% \\
+Median Response Time & 17.29 giây \\
 \hline
-Max VUs Tested & 100 & 200 & 100 \\
+P90 Response Time & 43.74 giây \\
+\hline
+P95 Response Time & 51.93 giây \\
+\hline
+Max Response Time & 60 giây (timeout) \\
+\hline
+Error Rate & 0.72\% (77 failed/10,550 total) \\
+\hline
+Max Concurrent VUs & 2000 users \\
+\hline
+Checks Passed & 99.27\% (20,946/21,100) \\
+\hline
+Data Received & 7.7 MB (20 KB/s) \\
+\hline
+Data Sent & 2.1 MB (5.5 KB/s) \\
 \hline
 \end{tabular}
-\caption{Performance Test Results}
+\caption{Login API Performance Test Results}
 \end{table}
 
-\textbf{Nhận xét:}
+\textbf{Chi tiết checks Login API:}
 \begin{itemize}
-    \item Hệ thống đáp ứng tốt với 100-200 concurrent users
-    \item 95\% requests hoàn thành dưới 500ms
-    \item Error rate < 1\% cho tất cả operations
-    \item GET operations nhanh nhất (95ms avg)
-    \item POST operations chậm hơn do validation và database write
+    \item $\checkmark$ Status is 200: 99.27\% (10,473 pass / 77 fail)
+    \item $\checkmark$ Login successful: 99.27\% (10,473 pass / 77 fail)
+    \item ⚠️ Threshold violations:
+    \begin{itemize}
+        \item ✗ \texttt{http\_req\_duration p(95)<2000ms}: FAILED (51.93s > 2s)
+        \item ✓ \texttt{http\_req\_failed rate<0.01}: PASSED (0.72\%)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Product API Test Results (30 giây với 5 VUs):}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Product API (CRUD Operations)} \\
+\hline
+Test Duration & 31.2 giây \\
+\hline
+Total Iterations & 117 iterations (3.75 iter/s) \\
+\hline
+Total HTTP Requests & 820 requests (26.26 req/s) \\
+\hline
+Avg Response Time & 16.16ms \\
+\hline
+Median Response Time & 10.92ms \\
+\hline
+P90 Response Time & 26.5ms \\
+\hline
+P95 Response Time & 38.37ms \\
+\hline
+Max Response Time & 907.65ms \\
+\hline
+Error Rate & 14.26\% (117 failed/820 total) \\
+\hline
+Max Concurrent VUs & 5 users \\
+\hline
+Checks Passed & 100\% (1170/1170) \\
+\hline
+Data Received & 558 KB (18 KB/s) \\
+\hline
+Data Sent & 310 KB (9.9 KB/s) \\
+\hline
+\end{tabular}
+\caption{Product API Performance Test Results}
+\end{table}
+
+\textbf{Chi tiết các checks (tất cả đều pass):}
+\begin{itemize}
+    \item $\checkmark$ Create Product - Status 200
+    \item $\checkmark$ Get Product By ID - Status 200 + đúng tên
+    \item $\checkmark$ Update Product - Status 200 + data thay đổi
+    \item $\checkmark$ Search Products - Status 200 + có kết quả
+    \item $\checkmark$ Get by Category - Status 200
+    \item $\checkmark$ Delete Product - Status 200
+    \item $\checkmark$ Verify Delete - Trả về lỗi 400/404 (đúng logic)
+\end{itemize}
+
+\textbf{Tổng hợp và Nhận xét:}
+\begin{itemize}
+    \item \textbf{Product API}: Hoạt động xuất sắc với response time rất nhanh
+    \begin{itemize}
+        \item Average: 16ms, P95: 38ms - đáp ứng threshold <2000ms
+        \item 100\% checks passed, logic CRUD đầy đủ
+        \item Error rate 14.26\% là expected behavior (delete non-existent products)
+        \item Stable với 5 concurrent users, 26 req/s throughput
+    \end{itemize}
+    
+    \item \textbf{Login API}: Hiệu suất chấp nhận được nhưng có vấn đề về response time
+    \begin{itemize}
+        \item 99.27\% success rate - rất tốt với high load (2000 concurrent users)
+        \item Response time cao (avg 22s, p95 52s) - vượt threshold 2s đáng kể
+        \item Nguyên nhân: Backend chưa optimize cho high concurrency (2000 VUs)
+        \item Error rate 0.72\% (77/10,550 requests) - đạt threshold <1\%
+        \item Throughput 27 req/s - thấp hơn Product API do response time cao
+    \end{itemize}
+    
+    \item \textbf{Khuyến nghị cải thiện:}
+    \begin{itemize}
+        \item Optimize database queries cho authentication
+        \item Implement connection pooling và caching cho JWT tokens
+        \item Tăng backend resources (CPU, memory) để xử lý 2000+ concurrent users
+        \item Consider load balancing cho production environment
+        \item Product API performance tốt, có thể scale lên higher load
+    \end{itemize}
 \end{itemize}
 
 \subsection{Security Testing voi OWASP ZAP}
