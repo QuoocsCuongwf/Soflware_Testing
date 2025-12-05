@@ -1,0 +1,106 @@
+﻿\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage[left=3cm,right=2cm,top=2.5cm,bottom=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{mathptmx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Software Testing Report},
+    pdfauthor={Team},
+}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, async, await, import, export, default, class, extends, constructor},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{purple}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{green!60!black}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{blue}\bfseries,
+  sensitive=false,
+  comment=[l]{\#},
+  commentstyle=\color{green!60!black}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{purple}]{*},
+  moredelim=**[il][\color{purple}{:}\color{black}]{:},
+  morestring=[b]',
+  morestring=[b]",
+  literate = {---}{{\ProcessThreeDashes}}3
+             {>}{{\textcolor{red}\textgreater}}1
+             {|}{{\textcolor{red}\textbar}}1
+             {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+\lstset{
+    basicstyle=\ttfamily\small\color{black},
+    backgroundcolor=\color{gray!5},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!30},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    commentstyle=\color{green!60!black}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    identifierstyle=\color{black},
+    showstringspaces=false,
+    tabsize=2,
+    captionpos=b
+}
+
+% Define custom colors
+\definecolor{uitblue}{RGB}{0,70,170}
+
+% Setup fancy header/footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=0.8cm]{logo.jpg}}
+\fancyhead[C]{\small\textcolor{uitblue}{Trường Đại học Sài Gòn Khoa Công Nghệ Thông Tin}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+
+\input{sections/trangBia}
+
+\newpage
+\tableofcontents
+\newpage
+
+\input{sections/gioiThieuDuAn}
+\input{sections/phanTichVaThietKeTestCase}
+\input{sections/unitTestVaTDD}
+\input{sections/integrationTest}
+\input{sections/mockTest}
+\input{sections/cicdVaE2E}
+\input{sections/bonus}
+\input{sections/ketLuan}
+\input{sections/taiLieuThamKhao}
+
+\end{document}

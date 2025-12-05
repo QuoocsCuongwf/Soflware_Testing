@@ -1,0 +1,138 @@
+\section{CI/CD và End-to-End Testing}
+
+\subsection{CI/CD Pipeline}
+
+Dự án sử dụng GitHub Actions để tự động hóa quá trình testing và deployment.
+
+\subsubsection{Workflow Configuration}
+
+\begin{lstlisting}[language=yaml, caption=GitHub Actions CI/CD Config]
+name: Complete CI Pipeline
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  complete-ci:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: flogin_db
+          MYSQL_USER: flogin
+          MYSQL_PASSWORD: flogin123
+          MYSQL_ROOT_PASSWORD: root123
+        ports:
+          - 3306:3306
+    strategy:
+      matrix:
+        java-version: [ '21' ]
+        node-version: [ '20' ]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java-version }}
+          cache: maven
+      - name: Backend - run tests
+        working-directory: backend
+        run: mvn -B clean test
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Frontend - install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend - unit tests with coverage
+        working-directory: frontend
+        run: npm test -- --watch=false --coverage
+      - name: Frontend - build production
+        working-directory: frontend
+        run: CI=false npm run build
+\end{lstlisting}
+
+\subsection{End-to-End Testing với Cypress}
+
+\subsubsection{Cypress Configuration}
+
+\begin{lstlisting}[language=JavaScript, caption=Cypress Configuration]
+const { defineConfig } = require("cypress");
+
+module.exports = defineConfig({
+  e2e: {
+    baseUrl: 'http://localhost:3000',
+    
+    setupNodeEvents(on, config) {
+      // Noi cau hinh cac plugin hoac su kien lang nghe
+    },
+  },
+});
+\end{lstlisting}
+
+\subsubsection{E2E Test Cases}
+
+\begin{lstlisting}[language=JavaScript, caption=Login E2E Test]
+describe('Login E2E Tests', () => {
+  beforeEach(() => {
+    cy.visit('http://localhost:3000/login');
+  });
+
+  it('d) Nen hien thi day du cac UI elements', () => {
+    cy.get('[data-testid="username-input"]').should('be.visible');
+    cy.get('[data-testid="password-input"]').should('be.visible');
+    cy.get('[data-testid="login-button"]').should('be.visible');
+    cy.contains('h2', 'Dang Nhap').should('be.visible');
+  });
+
+  it('b) Nen hien thi validation error khi submit form rong', () => {
+    cy.get('[data-testid="login-button"]').click();
+    cy.contains('Username khong duoc de trong').should('be.visible');
+    cy.contains('Password khong duoc de trong').should('be.visible');
+  });
+
+  it('c) Nen hien thi loi khi login fail', () => {
+    cy.intercept('POST', 'http://localhost:8080/api/auth/login', {
+      statusCode: 401,
+      body: { success: false, message: 'Ten dang nhap hoac mat khau khong dung!' }
+    }).as('loginFail');
+    cy.get('[data-testid="username-input"]').type('wronguser');
+    cy.get('[data-testid="password-input"]').type('Wrong123');
+    cy.get('[data-testid="login-button"]').click();
+    cy.wait('@loginFail');
+    cy.contains('Ten dang nhap hoac mat khau khong dung!').should('be.visible');
+  });
+
+  it('a) Nen login thanh cong voi credentials hop le', () => {
+    cy.intercept('POST', 'http://localhost:8080/api/auth/login', {
+      statusCode: 200,
+      body: {
+        success: true,
+        data: { token: 'fake-jwt-token', user: { id: 1, username: 'testuser' } }
+      }
+    }).as('loginSuccess');
+    cy.get('[data-testid="username-input"]').type('testuser');
+    cy.get('[data-testid="password-input"]').type('Test123');
+    cy.get('[data-testid="login-button"]').click();
+    cy.wait('@loginSuccess');
+    cy.url().should('include', '/products');
+  });
+});
+\end{lstlisting}
+
+\subsection{Kết quả CI/CD}
+
+\begin{itemize}
+    \item Tất cả tests chạy tự động khi push code
+    \item Build time: ~3-5 phút
+    \item Test coverage được report tự động
+    \item Phát hiện lỗi sớm trong quá trình development
+\end{itemize}

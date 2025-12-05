@@ -1,0 +1,985 @@
+\section{Integration Testing}
+
+\subsection{Giới thiệu Integration Testing}
+Integration Testing kiểm tra sự tương tác giữa các module/component trong hệ thống để đảm bảo chúng hoạt động đúng khi kết hợp với nhau.
+
+\subsubsection{Các loại Integration Testing}
+\begin{enumerate}
+    \item \textbf{Big Bang Integration:} Test tat ca modules cung mot luc
+    \item \textbf{Top-Down Integration:} Test tu UI xuong services
+    \item \textbf{Bottom-Up Integration:} Test tu database/services len UI
+    \item \textbf{Sandwich Integration:} Kết hợp top-down và bottom-up
+\end{enumerate}
+
+Du an nay su dung \textbf{Bottom-Up Integration Testing} approach:
+\begin{itemize}
+    \item Buoc 1: Test Repository/Service layer truoc
+    \item Buoc 2: Test Controller/API layer
+    \item Bước 3: Test UI Components với mock services
+    \item Buoc 4: Full E2E integration tests
+\end{itemize}
+
+\subsection{Integration Test - Login Module}
+
+\subsubsection{Frontend Integration Test - Login Component}
+Test tích hợp giữa Login component và authentication service:
+
+\begin{lstlisting}[language=JavaScript, caption=Frontend Login Integration Test]
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
+import Login from '../../src/components/Login';
+import authService from '../../src/services/authService';
+
+jest.mock('../../src/services/authService');
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: jest.fn()
+}));
+
+describe('Login Component Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // a) Test rendering va user interactions
+  test('Rendering component va user interactions co ban', () => {
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByTestId('username-input')).toBeInTheDocument();
+    expect(screen.getByTestId('password-input')).toBeInTheDocument();
+    expect(screen.getByTestId('login-button')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Dang Nhap/i }))
+      .toBeInTheDocument();
+    expect(screen.getByText(/Chao mung ban tro lai/i)).toBeInTheDocument();
+
+    const usernameInput = screen.getByTestId('username-input');
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    expect(usernameInput.value).toBe('testuser');
+
+    const passwordInput = screen.getByTestId('password-input');
+    fireEvent.change(passwordInput, { target: { value: 'Test123' } });
+    expect(passwordInput.value).toBe('Test123');
+  });
+
+  test('Clear error khi user nhap lai sau validation fail', async () => {
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.click(screen.getByTestId('login-button'));
+    
+    const usernameError = await screen.findByText(
+      'Username khong duoc de trong'
+    );
+    expect(usernameError).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+
+    expect(screen.queryByText('Username khong duoc de trong'))
+      .not.toBeInTheDocument();
+  });
+
+  // c) Error handling client-side
+  test('Hien thi loi khi submit form rong', async () => {
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    expect(await screen.findByText('Username khong duoc de trong'))
+      .toBeInTheDocument();
+    expect(await screen.findByText('Password khong duoc de trong'))
+      .toBeInTheDocument();
+  });
+
+  // b) Success + redirect
+  test('Goi API khi submit form hop le va handling success', async () => {
+    const mockNavigate = jest.fn();
+    const mockOnLogin = jest.fn();
+    useNavigate.mockReturnValue(mockNavigate);
+
+    authService.login.mockResolvedValue({
+      success: true,
+      message: 'Dang nhap thanh cong!',
+      data: { token: 'fake-token' }
+    });
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login onLogin={mockOnLogin} />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    await waitFor(() => {
+      expect(authService.login).toHaveBeenCalledWith('testuser', 'Test123');
+    });
+
+    await waitFor(() => {
+      expect(mockOnLogin).toHaveBeenCalled();
+    });
+    
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/products');
+    });
+  });
+
+  test('Hien thi loading state khi dang submit', async () => {
+    authService.login.mockImplementation(
+      () => new Promise(resolve => setTimeout(resolve, 100))
+    );
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    expect(await screen.findByText('Dang dang nhap...'))
+      .toBeInTheDocument();
+  });
+
+  // c) Error handling server-side
+  test('Handling error khi API fail', async () => {
+    authService.login.mockRejectedValue({
+      response: { data: { message: 'Loi server' } }
+    });
+
+    render(
+      <BrowserRouter future={{ v7_startTransition: true, 
+                              v7_relativeSplatPath: true }}>
+        <Login />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByTestId('username-input'), {
+      target: { value: 'testuser' }
+    });
+    fireEvent.change(screen.getByTestId('password-input'), {
+      target: { value: 'Test123' }
+    });
+    fireEvent.click(screen.getByTestId('login-button'));
+
+    expect(await screen.findByText('Loi server')).toBeInTheDocument();
+  });
+});
+\end{lstlisting}
+
+\subsubsection{Backend Integration Test - AuthController}
+Test tích hợp giữa Controller, Service và Repository layers:
+
+\begin{lstlisting}[language=Java, caption=Backend Auth Integration Test]
+package com.flogin.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flogin.dto.AuthResponse;
+import com.flogin.dto.LoginRequest;
+import com.flogin.security.CustomUserDetailsService;
+import com.flogin.security.JwtAuthenticationFilter;
+import com.flogin.security.JwtUtils;
+import com.flogin.service.AuthService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+public class AuthControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private AuthService authService;
+
+    @MockBean
+    private JwtUtils jwtUtils;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Test
+    void testLoginSuccess() throws Exception {
+        LoginRequest request = new LoginRequest(
+                "testuser", "Test123"
+        );
+
+        AuthResponse mockResponse = new AuthResponse(
+                "token123",
+                1L,
+                "testuser",
+                "test@gmail.com",
+                "USER"
+        );
+
+        when(authService.login(any(LoginRequest.class)))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Dang nhap thanh cong!"))
+        .andExpect(jsonPath("$.data.token").value("token123"))
+        .andExpect(jsonPath("$.data.id").value(1L))
+        .andExpect(jsonPath("$.data.username").value("testuser"))
+        .andExpect(jsonPath("$.data.email").value("test@gmail.com"))
+        .andExpect(jsonPath("$.data.role").value("USER"));
+    }
+
+    @Test
+    void testLoginResponseStructure() throws Exception {
+        LoginRequest request = new LoginRequest(
+                "testuser", "Test123"
+        );
+
+        AuthResponse mockResponse = new AuthResponse(
+                "token123",
+                1L,
+                "testuser",
+                "test@gmail.com",
+                "USER"
+        );
+
+        when(authService.login(any(LoginRequest.class)))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Dang nhap thanh cong!"))
+                .andExpect(jsonPath("$.data.token").exists())
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.username").value("testuser"))
+                .andExpect(jsonPath("$.data.email").exists())
+                .andExpect(jsonPath("$.data.role").exists());
+    }
+
+    @Test
+    void testLoginMissingFields() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCORSHeaders() throws Exception {
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                                .options("/api/auth/login")
+                                .header("Origin", "http://localhost:3000")
+                                .header("Access-Control-Request-Method", "POST")
+                )
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", 
+                    "http://localhost:3000"))
+                .andExpect(header().string("Access-Control-Allow-Methods", 
+                    containsString("POST")));
+    }
+
+}
+\end{lstlisting}
+
+\subsection{Integration Test - Product Module}
+
+\subsubsection{Frontend Integration Test - Product Components}
+Test tích hợp giữa ProductList, ProductForm va product service:
+
+\begin{lstlisting}[language=JavaScript, caption=Frontend Product Integration Test]
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import ProductForm from '../components/ProductForm.js';
+import ProductList from '../components/ProductList.js';
+import ProductDetail from '../components/ProductDetail.js';
+import productService from '../services/productService.js';
+import authService from '../services/authService.js';
+
+jest.mock('../services/productService.js');
+jest.mock('../services/authService.js');
+
+const mockedNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockedNavigate
+}));
+
+const mockProducts = [
+  {
+    id: 1,
+    name: 'iPhone 15 Pro',
+    description: 'Flagship smartphone 2024',
+    price: 999,
+    quantity: 5,
+    category: 'Phone',
+    imageUrl: 'https://example.com/iphone.jpg',
+    isAvailable: true,
+    createdBy: 1,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00'
+  },
+  {
+    id: 2,
+    name: 'Galaxy S24 Ultra',
+    description: 'Samsung flagship',
+    price: 1199,
+    quantity: 8,
+    category: 'Phone',
+    imageUrl: '',
+    isAvailable: true,
+    createdBy: 1,
+    createdAt: '2024-01-02T00:00:00',
+    updatedAt: '2024-01-02T00:00:00'
+  }
+];
+
+describe('Product integration tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
+    authService.getCurrentUser.mockReturnValue({ 
+      username: 'testuser', 
+      id: 1 
+    });
+    authService.getToken.mockReturnValue('fake-token');
+    
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: jest.fn(() => JSON.stringify({ username: 'testuser' })),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn()
+      },
+      writable: true
+    });
+  });
+
+  test('ProductForm hien thi va validate cuc bo', async () => {
+    render(
+      <MemoryRouter>
+        <ProductForm onClose={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    const nameInput = screen.getByLabelText(/Ten san pham/i);
+    const priceInput = screen.getByLabelText(/Gia/i);
+    const quantityInput = screen.getByLabelText(/So luong/i);
+
+    expect(nameInput).toBeInTheDocument();
+    expect(priceInput).toBeInTheDocument();
+    expect(quantityInput).toBeInTheDocument();
+  });
+
+  test('ProductList tai va hien thi danh sach san pham', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: mockProducts
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(/Product Management/i))
+      .toBeInTheDocument();
+
+    await waitFor(() => {
+        expect(screen.queryByText(/Dang tai san pham/i))
+          .not.toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
+
+    expect(await screen.findByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+    expect(screen.getByText(/Galaxy S24 Ultra/i)).toBeInTheDocument();
+  });
+
+  test('ProductList hien thi empty state khi khong co san pham', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: []
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Chua co san pham nao/i)).toBeInTheDocument();
+    });
+  });
+
+  test('ProductDetail hien thi chi tiet san pham', async () => {
+    productService.getProductById.mockResolvedValue({
+      success: true,
+      data: mockProducts[0]
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/products/1']}>
+        <Routes>
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const heading = await screen.findByRole('heading', {
+      name: /chi tiet san pham/i
+    });
+
+    expect(heading).toBeInTheDocument();
+  });
+
+  test('ProductList tim kiem san pham', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      success: true,
+      data: mockProducts
+    });
+
+    productService.searchProducts.mockResolvedValue({
+      success: true,
+      data: [mockProducts[0]]
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Tim kiem san pham/i);
+    const searchButton = screen.getByRole('button', { name: /Tim kiem/i });
+
+    fireEvent.change(searchInput, { target: { value: 'iPhone' } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(productService.searchProducts).toHaveBeenCalledWith('iPhone');
+      expect(screen.getByText(/iPhone 15 Pro/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Galaxy S24 Ultra/i))
+        .not.toBeInTheDocument();
+    });
+  });
+
+  test('Quy trinh: Them san pham moi thanh cong', async () => {
+    productService.getAllProducts.mockResolvedValue({ 
+      success: true, 
+      data: mockProducts 
+    });
+    productService.createProduct.mockResolvedValue({ 
+      success: true, 
+      data: { id: 3, name: 'New Product', price: 5000 } 
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    const addButton = screen.getByRole('button', { name: /Them|Create/i }); 
+    fireEvent.click(addButton);
+
+    const nameInput = screen.getByLabelText(/Ten san pham/i);
+    const priceInput = screen.getByLabelText(/Gia/i);
+    const quantityInput = screen.getByLabelText(/So luong/i);
+
+    fireEvent.change(nameInput, { target: { value: 'New Product' } });
+    fireEvent.change(priceInput, { target: { value: '5000' } });
+    fireEvent.change(quantityInput, { target: { value: '10' } });
+
+    const submitButton = screen.getByRole('button', { 
+      name: /Them moi|Luu/i 
+    });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(productService.createProduct).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'New Product',
+          price: 5000,
+          quantity: 10
+        })
+      );
+    });
+
+    expect(window.alert).toHaveBeenCalledWith(
+      expect.stringMatching(/thanh cong/i)
+    );
+  });
+
+  test('Quy trinh: Xoa san pham thanh cong', async () => {
+    productService.getAllProducts.mockResolvedValue({ 
+      success: true, 
+      data: mockProducts 
+    });
+    productService.deleteProduct.mockResolvedValue({ 
+      success: true 
+    });
+    
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
+
+    render(
+      <MemoryRouter>
+        <ProductList onLogout={jest.fn()} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/iPhone 15 Pro/i);
+
+    const deleteButtons = screen.getAllByRole('button', { 
+      name: /Xoa|Delete/i 
+    });
+    fireEvent.click(deleteButtons[0]);
+
+    expect(window.confirm).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(productService.deleteProduct)
+        .toHaveBeenCalledWith(mockProducts[0].id);
+    });
+
+    expect(productService.getAllProducts).toHaveBeenCalledTimes(2);
+  });
+});
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import ProductForm from '../components/ProductForm';
+import ProductList from '../components/ProductList';
+import productService from '../services/productService';
+
+jest.mock('../services/productService');
+
+describe('Product CRUD Integration Tests', () => {
+  test('create product flow', async () => {
+    productService.createProduct.mockResolvedValue({
+      data: { success: true, data: { id: 1 } }
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductForm />
+      </MemoryRouter>
+    );
+
+    // Fill form
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: 'Test Product' }
+    });
+    fireEvent.change(screen.getByLabelText(/price/i), {
+      target: { value: '100000' }
+    });
+    fireEvent.change(screen.getByLabelText(/quantity/i), {
+      target: { value: '10' }
+    });
+
+    // Submit
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(productService.createProduct).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Product',
+          price: 100000,
+          quantity: 10
+        })
+      );
+    });
+  });
+
+  test('update product flow', async () => {
+    const existingProduct = {
+      id: 1,
+      name: 'Old Product',
+      price: 50000,
+      quantity: 5
+    };
+
+    productService.getProductById.mockResolvedValue({
+      data: { success: true, data: existingProduct }
+    });
+
+    productService.updateProduct.mockResolvedValue({
+      data: { success: true }
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/products/edit/1']}>
+        <ProductForm />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Old Product')).toBeInTheDocument();
+    });
+
+    // Update fields
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: 'Updated Product' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /update/i }));
+
+    await waitFor(() => {
+      expect(productService.updateProduct).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ name: 'Updated Product' })
+      );
+    });
+  });
+
+  test('delete product flow', async () => {
+    productService.getAllProducts.mockResolvedValue({
+      data: {
+        success: true,
+        data: [{ id: 1, name: 'Product 1', price: 100, quantity: 10 }]
+      }
+    });
+
+    productService.deleteProduct.mockResolvedValue({
+      data: { success: true }
+    });
+
+    render(
+      <MemoryRouter>
+        <ProductList />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Product 1')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(productService.deleteProduct).toHaveBeenCalledWith(1);
+    });
+  });
+
+  test('search products flow', async () => {
+    const allProducts = [
+      { id: 1, name: 'Laptop', price: 1000, quantity: 5 },
+      { id: 2, name: 'Phone', price: 500, quantity: 10 },
+      { id: 3, name: 'Tablet', price: 300, quantity: 8 }
+    ];
+
+    productService.getAllProducts.mockResolvedValue({
+      data: { success: true, data: allProducts }
+    });
+
+    render(<MemoryRouter><ProductList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Laptop')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: 'Laptop' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Laptop')).toBeInTheDocument();
+      expect(screen.queryByText('Phone')).not.toBeInTheDocument();
+    });
+  });
+});
+\end{lstlisting}
+
+\subsubsection{Backend Integration Test - ProductController}
+Test tích hợp giữa Controller, Service và Repository cho Product module:
+
+\begin{lstlisting}[language=Java, caption=Backend Product Integration Test]
+package com.flogin.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flogin.dto.ProductRequest;
+import com.flogin.dto.ProductResponse;
+import com.flogin.entity.User;
+import com.flogin.repository.UserRepository;
+import com.flogin.security.CustomUserDetailsService;
+import com.flogin.security.JwtAuthenticationFilter;
+import com.flogin.security.JwtUtils;
+import com.flogin.service.ProductService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(ProductController.class)
+@AutoConfigureMockMvc
+@Import(JwtAuthenticationFilter.class) 
+@DisplayName("Product API Integration Tests")
+public class ProductControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private ProductService productService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private JwtUtils jwtUtils;
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    // --- Test POST /api/products (Create) ---
+    @Test
+    @DisplayName("POST /api/products - Tao san pham moi thanh cong")
+    @WithMockUser(username = "testuser")
+    void testCreateProduct() throws Exception {
+        ProductRequest request = new ProductRequest(
+            "Iphone 15", "Mo ta", new BigDecimal("30000000"), 10, "Phone", "url", true
+        );
+
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setUsername("testuser");
+
+        ProductResponse response = new ProductResponse(
+            1L, "Iphone 15", "Mo ta", new BigDecimal("30000000"), 10, "Phone", "url", true, 1L, null, null
+        );
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
+        when(productService.createProduct(any(ProductRequest.class), eq(1L))).thenReturn(response);
+
+        mockMvc.perform(post("/api/products")
+                .with(csrf()) // Fix loi 403
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Tao san pham thanh cong!"))
+            .andExpect(jsonPath("$.data.name").value("Iphone 15"));
+    }
+
+    // --- Test GET /api/products (Read all) ---
+    @Test
+    @DisplayName("GET /api/products - Lay danh sach san pham")
+    @WithMockUser(username = "testuser")
+    void testGetAllProducts() throws Exception {
+        List<ProductResponse> products = Arrays.asList(
+            new ProductResponse(1L, "Laptop", "Desc", new BigDecimal("15000000"), 10, "Electronics", "url", true, 1L, null, null),
+            new ProductResponse(2L, "Mouse", "Desc", new BigDecimal("200000"), 50, "Accessories", "url", true, 1L, null, null)
+        );
+
+        when(productService.getAllProducts()).thenReturn(products);
+
+        mockMvc.perform(get("/api/products"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data", hasSize(2)))
+            .andExpect(jsonPath("$.data[0].name").value("Laptop"));
+    }
+
+    // --- Test GET /api/products/{id} (Read one) ---
+    @Test
+    @DisplayName("GET /api/products/{id} - Lay chi tiet san pham")
+    @WithMockUser(username = "testuser")
+    void testGetProductById() throws Exception {
+        ProductResponse product = new ProductResponse(
+            1L, "Laptop Dell", "Desc", new BigDecimal("20000000"), 5, "Electronics", "url", true, 1L, null, null
+        );
+
+        when(productService.getProductById(1L)).thenReturn(product);
+
+        mockMvc.perform(get("/api/products/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.name").value("Laptop Dell"));
+    }
+
+    // --- Test PUT /api/products/{id} (Update) ---
+    @Test
+    @DisplayName("PUT /api/products/{id} - Cap nhat san pham")
+    @WithMockUser(username = "testuser")
+    void testUpdateProduct() throws Exception {
+        ProductRequest request = new ProductRequest(
+            "Laptop Dell Updated", "Desc", new BigDecimal("22000000"), 5, "Electronics", "url", true
+        );
+
+        ProductResponse response = new ProductResponse(
+            1L, "Laptop Dell Updated", "Desc", new BigDecimal("22000000"), 5, "Electronics", "url", true, 1L, null, null
+        );
+
+        when(productService.updateProduct(eq(1L), any(ProductRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/products/1")
+                .with(csrf()) 
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Cap nhat san pham thanh cong!"))
+            .andExpect(jsonPath("$.data.name").value("Laptop Dell Updated"));
+    }
+
+    // --- Test DELETE /api/products/{id} (Delete) ---
+    @Test
+    @DisplayName("DELETE /api/products/{id} - Xoa san pham")
+    @WithMockUser(username = "testuser")
+    void testDeleteProduct() throws Exception {
+        doNothing().when(productService).deleteProduct(1L);
+
+        mockMvc.perform(delete("/api/products/1")
+                .with(csrf())) // Fix loi 403
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Xoa san pham thanh cong!"));
+    }
+}
+\end{lstlisting}
+
+\subsection{Integration Test với Routing và Navigation}
+\begin{lstlisting}[language=JavaScript, caption=Routing Integration Test]
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import App from '../App';
+
+describe('Routing Integration Tests', () => {
+  test('should redirect to login if not authenticated', () => {
+    localStorage.removeItem('token');
+
+    render(
+      <MemoryRouter initialEntries={['/products']}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/login/i)).toBeInTheDocument();
+  });
+
+  test('should access products page if authenticated', async () => {
+    localStorage.setItem('token', 'fake-token');
+
+    render(
+      <MemoryRouter initialEntries={['/products']}>
+        <App />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/login/i)).not.toBeInTheDocument();
+    });
+  });
+});
+\end{lstlisting}
+
+\subsection{Kết quả Integration Testing}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Test Suite} & \textbf{Tests} & \textbf{Kết quả} \\
+\hline
+Login Flow & 5 & All Pass \\
+\hline
+Product CRUD Flow & 8 & All Pass \\
+\hline
+Routing & 4 & All Pass \\
+\hline
+Form Validation & 6 & All Pass \\
+\hline
+\textbf{Total} & \textbf{23} & \textbf{All Pass} \\
+\hline
+\end{tabular}
+\caption{Kết quả Integration Testing}
+\end{table}
+
+\subsection{Nhận xét}
+\begin{itemize}
+    \item Integration tests phát hiện 3 lỗi không thấy trong unit tests
+    \item Thời gian chạy tăng nhưng độ tin cậy cao hơn
+    \item Nên kết hợp cả unit và integration tests
+\end{itemize}

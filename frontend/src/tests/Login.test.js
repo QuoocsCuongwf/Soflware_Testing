@@ -4,34 +4,29 @@ describe('Validation Utils Tests', () => {
   
   // ==================== a) Unit tests cho validateUsername() (2 điểm) ====================
   
-  describe('validateUsername()', () => {
-    
+  describe('validateUsername()', () => {    
     // Test username rỗng
     test('Nên trả về lỗi khi username rỗng', () => {
       expect(validateUsername('')).toBe('Username không được để trống');
       expect(validateUsername(null)).toBe('Username không được để trống');
       expect(validateUsername(undefined)).toBe('Username không được để trống');
     });
-
     // Test username chỉ có khoảng trắng
     test('Nên trả về lỗi khi username chỉ có khoảng trắng', () => {
       expect(validateUsername('   ')).toBe('Username không được để trống');
       expect(validateUsername('  ')).toBe('Username không được để trống');
     });
-
     // Test username quá ngắn
     test('Nên trả về lỗi khi username quá ngắn (< 3 ký tự)', () => {
       expect(validateUsername('a')).toBe('Username phải có ít nhất 3 ký tự');
       expect(validateUsername('ab')).toBe('Username phải có ít nhất 3 ký tự');
     });
-
     // Test username quá dài
     test('Nên trả về lỗi khi username quá dài (> 20 ký tự)', () => {
       const longUsername = 'a'.repeat(21);
       expect(validateUsername(longUsername)).toBe('Username không được vượt quá 20 ký tự');
       expect(validateUsername('abcdefghijklmnopqrstu')).toBe('Username không được vượt quá 20 ký tự');
     });
-
     // Test ký tự đặc biệt không hợp lệ
     test('Nên trả về lỗi khi username chứa ký tự đặc biệt không hợp lệ', () => {
       expect(validateUsername('user@name')).toBe('Username chỉ được chứa chữ cái, số và dấu gạch dưới');

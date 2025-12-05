@@ -1,0 +1,125 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.flogin:flogin-backend >----------------------
+[INFO] Building FloginFE_BE Backend 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ flogin-backend ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ flogin-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ flogin-backend ---
+[INFO] skip non existing resourceDirectory F:\softwave testing\project Ass2\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ flogin-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.0.0-M9:test (default-test) @ flogin-backend ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.flogin.controller.AuthControllerIntegrationTest
+09:11:23.327 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.flogin.controller.AuthControllerIntegrationTest]: AuthControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:11:23.562 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.flogin.FloginApplication for test class com.flogin.controller.AuthControllerIntegrationTest
+09:11:23.856 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2025-12-05T09:11:24.490+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.AuthControllerIntegrationTest      : Starting AuthControllerIntegrationTest using Java 21.0.8 with PID 23852 (started by HP in F:\softwave testing\project Ass2\backend)
+2025-12-05T09:11:24.492+07:00 DEBUG 23852 --- [flogin-backend] [           main] c.f.c.AuthControllerIntegrationTest      : Running with Spring Boot v3.2.5, Spring v6.1.6
+2025-12-05T09:11:24.494+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.AuthControllerIntegrationTest      : No active profile set, falling back to 1 default profile: "default"
+mvn : WARNING: A Java agent has been loaded dynamically 
+(C:\Users\HP\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.13\byte-buddy-agent-1.14.13.jar)
+At line:1 char:48
++ cd "f:\softwave testing\project Ass2\backend"; mvn test 2>&1 | Out-Fi ...
++                                                ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (WARNING: A Java...nt-1.14.13.jar):String) [], RemoteEx 
+   ception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide 
+this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for 
+more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because 
+bootstrap classpath has been appended
+2025-12-05T09:11:29.517+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@6df2af02, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@779228dc, org.springframework.security.web.context.SecurityContextHolderFilter@e97f115, org.springframework.security.web.header.HeaderWriterFilter@4a833595, org.springframework.web.filter.CorsFilter@1f7336b2, org.springframework.security.web.csrf.CsrfFilter@45c90a05, org.springframework.security.web.authentication.logout.LogoutFilter@71139e77, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@7e31d53b, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@7b4b8199, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@4c030fe1, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@69fe7090, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6f8ac8d5, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@370225c7, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@347123dc, org.springframework.security.web.access.ExceptionTranslationFilter@31f7eb8, org.springframework.security.web.access.intercept.AuthorizationFilter@45c423b3]
+2025-12-05T09:11:29.564+07:00  WARN 23852 --- [flogin-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: fd1b08c0-34c9-4080-a066-cee26900a2dd
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-12-05T09:11:29.628+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2025-12-05T09:11:29.628+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2025-12-05T09:11:29.632+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2025-12-05T09:11:29.679+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.AuthControllerIntegrationTest      : Started AuthControllerIntegrationTest in 5.881 seconds (process running for 8.71)
+2025-12-05T09:11:30.390+07:00  WARN 23852 --- [flogin-backend] [           main] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<?> com.flogin.controller.AuthController.login(com.flogin.dto.LoginRequest): [Field error in object 'loginRequest' on field 'password': rejected value [null]; codes [NotBlank.loginRequest.password,NotBlank.password,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [loginRequest.password,password]; arguments []; default message [password]]; default message [Password kh⌠ng ???c ?? tr?ng]] ]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.488 s - in com.flogin.controller.AuthControllerIntegrationTest
+[INFO] Running com.flogin.controller.AuthControllerMockTest
+2025-12-05T09:11:30.418+07:00  INFO 23852 --- [flogin-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.flogin.controller.AuthControllerMockTest]: AuthControllerMockTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-12-05T09:11:30.451+07:00  INFO 23852 --- [flogin-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.flogin.FloginApplication for test class com.flogin.controller.AuthControllerMockTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.089 s - in com.flogin.controller.AuthControllerMockTest
+[INFO] Running com.flogin.controller.ProductControllerIntegrationTest
+2025-12-05T09:11:30.519+07:00  INFO 23852 --- [flogin-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.flogin.controller.ProductControllerIntegrationTest]: ProductControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-12-05T09:11:30.536+07:00  INFO 23852 --- [flogin-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.flogin.FloginApplication for test class com.flogin.controller.ProductControllerIntegrationTest
+2025-12-05T09:11:30.544+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2025-12-05T09:11:30.656+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.ProductControllerIntegrationTest   : Starting ProductControllerIntegrationTest using Java 21.0.8 with PID 23852 (started by HP in F:\softwave testing\project Ass2\backend)
+2025-12-05T09:11:30.656+07:00 DEBUG 23852 --- [flogin-backend] [           main] c.f.c.ProductControllerIntegrationTest   : Running with Spring Boot v3.2.5, Spring v6.1.6
+2025-12-05T09:11:30.657+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.ProductControllerIntegrationTest   : No active profile set, falling back to 1 default profile: "default"
+2025-12-05T09:11:31.512+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@51e1e058, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@23e0c200, org.springframework.security.web.context.SecurityContextHolderFilter@6baee63b, org.springframework.security.web.header.HeaderWriterFilter@f5f8de2, org.springframework.web.filter.CorsFilter@25d23478, org.springframework.security.web.csrf.CsrfFilter@68f264bf, org.springframework.security.web.authentication.logout.LogoutFilter@490fbeaa, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@34065642, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@5008559a, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@677c2820, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@c85486, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1002b06d, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@234bfc8c, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@39c1e7b7, org.springframework.security.web.access.ExceptionTranslationFilter@77988c45, org.springframework.security.web.access.intercept.AuthorizationFilter@276aa33f]
+2025-12-05T09:11:31.524+07:00  WARN 23852 --- [flogin-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: d94d30b1-121f-4a72-88fc-a78e04e08c5c
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-12-05T09:11:31.545+07:00 DEBUG 23852 --- [flogin-backend] [           main] c.f.security.JwtAuthenticationFilter     : Filter 'jwtAuthenticationFilter' configured for use
+2025-12-05T09:11:31.546+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2025-12-05T09:11:31.546+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2025-12-05T09:11:31.548+07:00  INFO 23852 --- [flogin-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2025-12-05T09:11:31.562+07:00  INFO 23852 --- [flogin-backend] [           main] c.f.c.ProductControllerIntegrationTest   : Started ProductControllerIntegrationTest in 1.019 seconds (process running for 10.593)
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.415 s - in com.flogin.controller.ProductControllerIntegrationTest
+[INFO] Running com.flogin.service.AuthServiceTest
+[INFO] Running com.flogin.service.AuthServiceTest$LoginRequestValidationTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.086 s - in com.flogin.service.AuthServiceTest$LoginRequestValidationTest
+[INFO] Running com.flogin.service.AuthServiceTest$ValidationMethodsTests
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.039 s - in com.flogin.service.AuthServiceTest$ValidationMethodsTests
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.443 s - in com.flogin.service.AuthServiceTest
+[INFO] Running com.flogin.service.ProductServiceMockTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.209 s - in com.flogin.service.ProductServiceMockTest
+[INFO] Running com.flogin.service.ProductServiceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.071 s - in com.flogin.service.ProductServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 48, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.069 s
+[INFO] Finished at: 2025-12-05T09:11:32+07:00
+[INFO] ------------------------------------------------------------------------
