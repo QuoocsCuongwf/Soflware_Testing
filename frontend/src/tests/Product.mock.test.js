@@ -65,40 +65,105 @@ describe('Product Service Mock CRUD (No UI Interaction)', () => {
     });
   });
 
-  // --- 2. CREATE / UPDATE / DELETE (Manual Trigger - Gọi hàm trực tiếp) ---
+  //'2. CREATE / UPDATE / DELETE (Manual Trigger)
 
-  test('createProduct - Verify mock call', async () => {
-    const newProduct = { name: 'Xiaomi', price: 5000000 };
-    productService.createProduct.mockResolvedValue({ success: true, data: newProduct });
+  // --- 1. CREATE PRODUCT ---
 
-    // Gọi trực tiếp
-    await productService.createProduct(newProduct);
+  test('Create product success - Kiểm tra việc tạo sản phẩm mới thành công', async () => {
+    // Arrange: Chuẩn bị dữ liệu và mock trả về thành công
+    const newProduct = { name: 'Samsung Galaxy S24', price: 20000000 };
+    const mockResponse = { success: true, data: { id: 1, ...newProduct } };
+    
+    productService.createProduct.mockResolvedValue(mockResponse);
 
-    // Verify
+    // Act: Gọi hàm
+    const result = await productService.createProduct(newProduct);
+
+    // Assert: Kiểm tra kết quả và việc gọi hàm
+    expect(result).toEqual(mockResponse); // Kiểm tra dữ liệu trả về đúng
     expect(productService.createProduct).toHaveBeenCalledTimes(1);
     expect(productService.createProduct).toHaveBeenCalledWith(newProduct);
   });
 
-  test('updateProduct - failure scenario', async () => {
-    productService.updateProduct.mockRejectedValue({ message: 'Update failed' });
+  test('Create product failure - Kiểm tra việc tạo sản phẩm mới thất bại', async () => {
+    // Arrange: Chuẩn bị dữ liệu và mock trả về lỗi (reject)
+    const newProduct = { name: 'Invalid Product' };
+    const errorMessage = 'Network Error';
+    
+    productService.createProduct.mockRejectedValue(new Error(errorMessage));
 
-    try {
-      await productService.updateProduct(1, { name: 'New Name' });
-    } catch (error) {
-      // Bắt lỗi để test pass
-    }
+    // Act & Assert: Kiểm tra xem hàm có ném ra lỗi như mong đợi không
+    await expect(productService.createProduct(newProduct)).rejects.toThrow(errorMessage);
+    
+    // Kiểm tra hàm vẫn được gọi dù lỗi
+    expect(productService.createProduct).toHaveBeenCalledTimes(1);
+    expect(productService.createProduct).toHaveBeenCalledWith(newProduct);
+  });
+
+  // --- 2. UPDATE PRODUCT ---
+
+  test('Update product success - Kiểm tra việc cập nhật sản phẩm thành công', async () => {
+    // Arrange
+    const productId = 1;
+    const updateData = { price: 18000000 };
+    const mockResponse = { success: true, message: 'Updated successfully' };
+
+    productService.updateProduct.mockResolvedValue(mockResponse);
+
+    // Act
+    const result = await productService.updateProduct(productId, updateData);
+
+    // Assert
+    expect(result).toEqual(mockResponse);
+    expect(productService.updateProduct).toHaveBeenCalledTimes(1);
+    expect(productService.updateProduct).toHaveBeenCalledWith(productId, updateData);
+  });
+
+  test('Update product failure - Kiểm tra việc cập nhật sản phẩm thất bại', async () => {
+    // Arrange
+    const productId = 99; // ID không tồn tại
+    const updateData = { name: 'Ghost Product' };
+    const errorObj = { message: 'Product not found' };
+
+    productService.updateProduct.mockRejectedValue(errorObj);
+
+    // Act & Assert: Sử dụng rejects.toEqual nếu lỗi trả về là object, toThrow nếu là Error instance
+    await expect(productService.updateProduct(productId, updateData)).rejects.toEqual(errorObj);
 
     expect(productService.updateProduct).toHaveBeenCalledTimes(1);
-    expect(productService.updateProduct).toHaveBeenCalledWith(1, { name: 'New Name' });
+    expect(productService.updateProduct).toHaveBeenCalledWith(productId, updateData);
   });
 
-  test('deleteProduct - success call', async () => {
-    productService.deleteProduct.mockResolvedValue({ success: true });
+  // --- 3. DELETE PRODUCT ---
 
-    await productService.deleteProduct(99);
+  test('Delete product success - Kiểm tra việc xóa sản phẩm thành công', async () => {
+    // Arrange
+    const productId = 5;
+    const mockResponse = { success: true };
 
+    productService.deleteProduct.mockResolvedValue(mockResponse);
+
+    // Act
+    const result = await productService.deleteProduct(productId);
+
+    // Assert
+    expect(result).toEqual(mockResponse);
     expect(productService.deleteProduct).toHaveBeenCalledTimes(1);
-    expect(productService.deleteProduct).toHaveBeenCalledWith(99);
+    expect(productService.deleteProduct).toHaveBeenCalledWith(productId);
   });
+  test('Delete product failure - Kiểm tra việc xóa sản phẩm thất bại', async () => {
+    // Arrange: Giả lập lỗi (ví dụ: lỗi mạng hoặc ID không tồn tại)
+    const productId = 9999;
+    const errorMessage = 'Delete failed: Product not found';
+    
+    // Mock trả về một Error (hoặc object lỗi tùy implementation của bạn)
+    productService.deleteProduct.mockRejectedValue(new Error(errorMessage));
 
+    // Act & Assert: Kiểm tra hàm ném ra lỗi đúng như mong đợi
+    await expect(productService.deleteProduct(productId)).rejects.toThrow(errorMessage);
+
+    // Verify: Đảm bảo hàm vẫn được gọi đúng tham số
+    expect(productService.deleteProduct).toHaveBeenCalledTimes(1);
+    expect(productService.deleteProduct).toHaveBeenCalledWith(productId);
+  });
 });

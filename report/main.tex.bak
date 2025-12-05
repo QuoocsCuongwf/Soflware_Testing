@@ -1,0 +1,135 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage[left=3cm,right=2cm,top=2.5cm,bottom=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listingsutf8}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{mathptmx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Software Testing Report},
+    pdfauthor={Team},
+}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, async, await, import, export, default, class, extends, constructor},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{purple}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{green!60!black}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{blue}\bfseries,
+  sensitive=false,
+  comment=[l]{\#},
+  commentstyle=\color{green!60!black}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{purple}]{*},
+  moredelim=**[il][\color{purple}{:}\color{black}]{:},
+  morestring=[b]',
+  morestring=[b]",
+  literate = {---}{{\ProcessThreeDashes}}3
+             {>}{{\textcolor{red}\textgreater}}1
+             {|}{{\textcolor{red}\textbar}}1
+             {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+\lstset{
+    basicstyle=\ttfamily\small\color{black},
+    backgroundcolor=\color{gray!5},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!30},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    commentstyle=\color{green!60!black}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    identifierstyle=\color{black},
+    showstringspaces=false,
+    tabsize=2,
+    captionpos=b,
+    extendedchars=true,
+    inputencoding=utf8,
+    literate=
+        {á}{{\'a}}1 {à}{{\`a}}1 {ả}{{\h{a}}}1 {ã}{{\~a}}1 {ạ}{{\d{a}}}1
+        {ă}{{\u{a}}}1 {ắ}{{\'{ă}}}1 {ằ}{{\`{ă}}}1 {ẳ}{{\h{ă}}}1 {ẵ}{{\~{ă}}}1 {ặ}{{\d{ă}}}1
+        {â}{{\^a}}1 {ấ}{{\'{â}}}1 {ầ}{{\`{â}}}1 {ẩ}{{\h{â}}}1 {ẫ}{{\~{â}}}1 {ậ}{{\d{â}}}1
+        {đ}{{\dj}}1
+        {é}{{\'e}}1 {è}{{\`e}}1 {ẻ}{{\h{e}}}1 {ẽ}{{\~e}}1 {ẹ}{{\d{e}}}1
+        {ê}{{\^e}}1 {ế}{{\'{ê}}}1 {ề}{{\`{ê}}}1 {ể}{{\h{ê}}}1 {ễ}{{\~{ê}}}1 {ệ}{{\d{ê}}}1
+        {í}{{\'i}}1 {ì}{{\`i}}1 {ỉ}{{\h{i}}}1 {ĩ}{{\~i}}1 {ị}{{\d{i}}}1
+        {ó}{{\'o}}1 {ò}{{\`o}}1 {ỏ}{{\h{o}}}1 {õ}{{\~o}}1 {ọ}{{\d{o}}}1
+        {ô}{{\^o}}1 {ố}{{\'{ô}}}1 {ồ}{{\`{ô}}}1 {ổ}{{\h{ô}}}1 {ỗ}{{\~{ô}}}1 {ộ}{{\d{ô}}}1
+        {ơ}{{\ohorn}}1 {ớ}{{\'{ơ}}}1 {ờ}{{\`{ơ}}}1 {ở}{{\h{ơ}}}1 {ỡ}{{\~{ơ}}}1 {ợ}{{\d{ơ}}}1
+        {ú}{{\'u}}1 {ù}{{\`u}}1 {ủ}{{\h{u}}}1 {ũ}{{\~u}}1 {ụ}{{\d{u}}}1
+        {ư}{{\uhorn}}1 {ứ}{{\'{ư}}}1 {ừ}{{\`{ư}}}1 {ử}{{\h{ư}}}1 {ữ}{{\~{ư}}}1 {ự}{{\d{ư}}}1
+        {ý}{{\'y}}1 {ỳ}{{\`y}}1 {ỷ}{{\h{y}}}1 {ỹ}{{\~y}}1 {ỵ}{{\d{y}}}1
+        {Á}{{\'A}}1 {À}{{\`A}}1 {Ả}{{\h{A}}}1 {Ã}{{\~A}}1 {Ạ}{{\d{A}}}1
+        {Ă}{{\u{A}}}1 {Ắ}{{\'{Ă}}}1 {Ằ}{{\`{Ă}}}1 {Ẳ}{{\h{Ă}}}1 {Ẵ}{{\~{Ă}}}1 {Ặ}{{\d{Ă}}}1
+        {Â}{{\^A}}1 {Ấ}{{\'{Â}}}1 {Ầ}{{\`{Â}}}1 {Ẩ}{{\h{Â}}}1 {Ẫ}{{\~{Â}}}1 {Ậ}{{\d{Â}}}1
+        {Đ}{{\DJ}}1
+        {É}{{\'E}}1 {È}{{\`E}}1 {Ẻ}{{\h{E}}}1 {Ẽ}{{\~E}}1 {Ẹ}{{\d{E}}}1
+        {Ê}{{\^E}}1 {Ế}{{\'{Ê}}}1 {Ề}{{\`{Ê}}}1 {Ể}{{\h{Ê}}}1 {Ễ}{{\~{Ê}}}1 {Ệ}{{\d{Ê}}}1
+        {Í}{{\'I}}1 {Ì}{{\`I}}1 {Ỉ}{{\h{I}}}1 {Ĩ}{{\~I}}1 {Ị}{{\d{I}}}1
+        {Ó}{{\'O}}1 {Ò}{{\`O}}1 {Ỏ}{{\h{O}}}1 {Õ}{{\~O}}1 {Ọ}{{\d{O}}}1
+        {Ô}{{\^O}}1 {Ố}{{\'{Ô}}}1 {Ồ}{{\`{Ô}}}1 {Ổ}{{\h{Ô}}}1 {Ỗ}{{\~{Ô}}}1 {Ộ}{{\d{Ô}}}1
+        {Ơ}{{\Ohorn}}1 {Ớ}{{\'{Ơ}}}1 {Ờ}{{\`{Ơ}}}1 {Ở}{{\h{Ơ}}}1 {Ỡ}{{\~{Ơ}}}1 {Ợ}{{\d{Ơ}}}1
+        {Ú}{{\'U}}1 {Ù}{{\`U}}1 {Ủ}{{\h{U}}}1 {Ũ}{{\~U}}1 {Ụ}{{\d{U}}}1
+        {Ư}{{\Uhorn}}1 {Ứ}{{\'{Ư}}}1 {Ừ}{{\`{Ư}}}1 {Ử}{{\h{Ư}}}1 {Ữ}{{\~{Ư}}}1 {Ự}{{\d{Ư}}}1
+        {Ý}{{\'Y}}1 {Ỳ}{{\`Y}}1 {Ỷ}{{\h{Y}}}1 {Ỹ}{{\~Y}}1 {Ỵ}{{\d{Y}}}1
+}
+
+% Define custom colors
+\definecolor{uitblue}{RGB}{0,70,170}
+
+% Setup fancy header/footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=0.8cm]{logo.jpg}}
+\fancyhead[C]{\small\textcolor{uitblue}{Trường Đại học Sài Gòn Khoa Công Nghệ Thông Tin}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+
+\input{sections/trangBia}
+
+\newpage
+\tableofcontents
+\newpage
+
+\input{sections/gioiThieuDuAn}
+\input{sections/phanTichVaThietKeTestCase}
+\input{sections/unitTestVaTDD}
+\input{sections/integrationTest}
+\input{sections/mockTest}
+\input{sections/cicdVaE2E}
+\input{sections/bonus}
+\input{sections/ketLuan}
+\input{sections/taiLieuThamKhao}
+
+\end{document}

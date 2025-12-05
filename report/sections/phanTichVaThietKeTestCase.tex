@@ -1,0 +1,304 @@
+\section{Phân tích và thiết kế Test Case}
+
+\subsection{Tổng quan dự án}
+Dự án bao gồm 2 modules chính:
+\begin{itemize}
+    \item \textbf{Frontend:} React application voi authentication va product management
+    \item \textbf{Backend:} Spring Boot REST API voi JWT authentication
+\end{itemize}
+
+\subsection{Phân tích yêu cầu kiểm thử}
+
+\subsubsection{Module Authentication}
+\textbf{Frontend Requirements:}
+\begin{itemize}
+    \item Validate input fields (username, password, email)
+    \item Hiển thị error messages cho invalid inputs
+    \item Lưu JWT token vào localStorage sau khi login thành công
+    \item Redirect đến dashboard sau login
+    \item Handle loading state và API errors
+\end{itemize}
+
+\textbf{Backend Requirements:}
+\begin{itemize}
+    \item User registration với password encryption
+    \item User authentication với JWT token generation
+    \item Validate unique username và email
+    \item Password strength validation
+    \item Handle authentication failures
+\end{itemize}
+
+\subsubsection{Module Product Management}
+\textbf{Frontend Requirements:}
+\begin{itemize}
+    \item Display danh sách sản phẩm (ProductList)
+    \item Thêm mới sản phẩm (ProductForm)
+    \item Cập nhật thông tin sản phẩm (Edit)
+    \item Xóa sản phẩm với confirmation
+    \item Tìm kiếm và filter sản phẩm
+    \item Validate product fields (name, price, quantity)
+\end{itemize}
+
+\textbf{Backend Requirements:}
+\begin{itemize}
+    \item CRUD REST API endpoints cho Product
+    \item Request validation với Bean Validation
+    \item Database persistence với JPA
+    \item Error handling với proper HTTP status codes
+    \item Search và filter functionality
+\end{itemize}
+
+\subsection{Ma trận Test Coverage}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Module} & \textbf{Unit Test} & \textbf{Integration} & \textbf{E2E} & \textbf{Total} \\
+\hline
+Auth - Frontend & 22 & 7 & 2 & 31 \\
+\hline
+Auth - Backend & 24 & 4 & - & 28 \\
+\hline
+Product - Frontend & 40 & 17 & 3 & 60 \\
+\hline
+Product - Backend & 10 & 5 & - & 15 \\
+\hline
+\textbf{Total} & \textbf{96} & \textbf{33} & \textbf{5} & \textbf{134} \\
+\hline
+\end{tabular}
+\caption{Test Coverage Matrix}
+\end{table}
+
+\subsection{Thiết kế Test Case}
+
+\subsubsection{Test Case cho Authentication Module}
+\textbf{Frontend Test Cases:}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|p{1cm}|p{3.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|}
+\hline
+\textbf{ID} & \textbf{Mô tả} & \textbf{Input} & \textbf{Expected Output} & \textbf{Status} \\
+\hline
+TC-A01 & Validate username rong & username: "" & Error: "Username khong duoc de trong" & Pass \\
+\hline
+TC-A02 & Validate username qua ngan & username: "ab" & Error: "Min 3 chars" & Pass \\
+\hline
+TC-A03 & Validate username hop le & username: "user123" & null (no error) & Pass \\
+\hline
+TC-A04 & Validate password rong & password: "" & Error: "Password required" & Pass \\
+\hline
+TC-A05 & Validate password qua ngan & password: "12345" & Error: "Min 6 chars" & Pass \\
+\hline
+TC-A06 & Validate password khong co chu & password: "123456" & Error: "Must have letter" & Pass \\
+\hline
+TC-A07 & Validate password hop le & password: "Test123" & null (no error) & Pass \\
+\hline
+TC-A08 & Login thanh cong & valid credentials & Token + redirect & Pass \\
+\hline
+TC-A09 & Login sai password & wrong password & Error message shown & Pass \\
+\hline
+TC-A10 & Login user khong ton tai & invalid username & Error: "User not found" & Pass \\
+\hline
+\end{tabular}
+\caption{Frontend Authentication Test Cases}
+\end{table}
+
+\textbf{Backend Test Cases:}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|p{1cm}|p{3.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|}
+\hline
+\textbf{ID} & \textbf{Mo ta} & \textbf{Input} & \textbf{Expected Output} & \textbf{Status} \\
+\hline
+TC-A11 & Register user moi thanh cong & Valid user data & HTTP 201, token & Pass \\
+\hline
+TC-A12 & Register username da ton tai & Existing username & HTTP 400, error msg & Pass \\
+\hline
+TC-A13 & Register email da ton tai & Existing email & HTTP 400, error msg & Pass \\
+\hline
+TC-A14 & Register voi du lieu khong hop le & Invalid data & HTTP 400, validation errors & Pass \\
+\hline
+TC-A15 & Login voi credentials dung & Valid credentials & HTTP 200, JWT token & Pass \\
+\hline
+TC-A16 & Login voi password sai & Wrong password & HTTP 401, error msg & Pass \\
+\hline
+TC-A17 & Login voi username khong ton tai & Non-existent user & HTTP 401, error msg & Pass \\
+\hline
+TC-A18 & Password encryption & Plain password & BCrypt hashed password & Pass \\
+\hline
+TC-A19 & JWT token generation & Valid user & Valid JWT token & Pass \\
+\hline
+TC-A20 & JWT token validation & Valid/Invalid token & True/False & Pass \\
+\hline
+\end{tabular}
+\caption{Backend Authentication Test Cases}
+\end{table}
+
+\subsubsection{Test Case cho Product Management Module}
+\textbf{Frontend Test Cases:}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|p{1cm}|p{3.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|}
+\hline
+\textbf{ID} & \textbf{Mô tả} & \textbf{Input} & \textbf{Expected Output} & \textbf{Status} \\
+\hline
+TC-P01 & Validate product name rong & name: "" & Error: "Name required" & Pass \\
+\hline
+TC-P02 & Validate product name qua ngan & name: "ab" & Error: "Min 3 chars" & Pass \\
+\hline
+TC-P03 & Validate price am & price: -100 & Error: "Price must be positive" & Pass \\
+\hline
+TC-P04 & Validate price = 0 & price: 0 & Error: "Price must > 0" & Pass \\
+\hline
+TC-P05 & Validate quantity am & quantity: -5 & Error: "Quantity cannot be negative" & Pass \\
+\hline
+TC-P06 & Validate du lieu hop le & Valid product data & null (no errors) & Pass \\
+\hline
+TC-P07 & Hien thi danh sach san pham & - & Show product list & Pass \\
+\hline
+TC-P08 & Hien thi empty state & No products & "No products found" & Pass \\
+\hline
+TC-P09 & Them san pham moi & Valid data & Product added & Pass \\
+\hline
+TC-P10 & Cap nhat san pham & Updated data & Product updated & Pass \\
+\hline
+TC-P11 & Xoa san pham voi confirm & Confirm delete & Product deleted & Pass \\
+\hline
+TC-P12 & Huy xoa san pham & Cancel delete & Product not deleted & Pass \\
+\hline
+TC-P13 & Tim kiem san pham & Search keyword & Filtered results & Pass \\
+\hline
+TC-P14 & Search khong co ket qua & Invalid keyword & Empty list message & Pass \\
+\hline
+\end{tabular}
+\caption{Frontend Product Test Cases}
+\end{table}
+
+\textbf{Backend Test Cases:}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|p{1cm}|p{3.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|}
+\hline
+\textbf{ID} & \textbf{Mô tả} & \textbf{Input} & \textbf{Expected Output} & \textbf{Status} \\
+\hline
+TC-P15 & GET all products & - & HTTP 200, product list & Pass \\
+\hline
+TC-P16 & GET product by valid ID & id: 1 & HTTP 200, product data & Pass \\
+\hline
+TC-P17 & GET product by invalid ID & id: 999 & HTTP 404, error msg & Pass \\
+\hline
+TC-P18 & POST create product hop le & Valid product JSON & HTTP 201, created product & Pass \\
+\hline
+TC-P19 & POST voi price am & price: -100 & HTTP 400, validation error & Pass \\
+\hline
+TC-P20 & POST voi name rong & name: "" & HTTP 400, validation error & Pass \\
+\hline
+TC-P21 & PUT update product hop le & Valid update data & HTTP 200, updated product & Pass \\
+\hline
+TC-P22 & PUT product khong ton tai & id: 999 & HTTP 404, error msg & Pass \\
+\hline
+TC-P23 & DELETE product thanh cong & Valid id & HTTP 200, success msg & Pass \\
+\hline
+TC-P24 & DELETE product khong ton tai & id: 999 & HTTP 404, error msg & Pass \\
+\hline
+TC-P25 & Search products by name & keyword & HTTP 200, filtered list & Pass \\
+\hline
+\end{tabular}
+\caption{Backend Product Test Cases}
+\end{table}
+
+\subsection{Test Coverage Metrics}
+
+\subsubsection{Coverage Goals}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Current} \\
+\hline
+Statement Coverage & $\geq 80\%$ & 85.2\% \\
+\hline
+Branch Coverage & $\geq 70\%$ & 78.4\% \\
+\hline
+Function Coverage & $\geq 90\%$ & 92.1\% \\
+\hline
+Line Coverage & $\geq 80\%$ & 84.8\% \\
+\hline
+\end{tabular}
+\caption{Coverage Metrics Goals vs Actual}
+\end{table}
+
+\subsubsection{Coverage by Module}
+\begin{itemize}
+    \item \textbf{Frontend:}
+    \begin{itemize}
+        \item validation.js: 92.3\% lines
+        \item Login.js: 97.36\% statements
+        \item ProductList.js: 81.81\% statements
+        \item ProductForm.js: 83.33\% statements
+    \end{itemize}
+    \item \textbf{Backend:}
+    \begin{itemize}
+        \item AuthService: 95\% line coverage
+        \item ProductService: 90\% line coverage
+        \item Controllers: 85\% line coverage
+        \item Repositories: 100\% (Spring Data JPA)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Chiến lược Kiểm thử}
+
+\subsubsection{Test Pyramid Approach}
+\begin{enumerate}
+    \item \textbf{Unit Tests (70\%):} Test isolated functions và methods
+    \begin{itemize}
+        \item Validation functions
+        \item Service layer business logic
+        \item Utility functions
+    \end{itemize}
+    
+    \item \textbf{Integration Tests (20\%):} Test component interactions
+    \begin{itemize}
+        \item React components với mock services
+        \item API endpoints với database
+        \item Authentication flow
+    \end{itemize}
+    
+    \item \textbf{E2E Tests (10\%):} Test full user journeys
+    \begin{itemize}
+        \item Login flow
+        \item Product CRUD operations
+        \item Search và filter
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Testing Tools và Frameworks}
+\begin{itemize}
+    \item \textbf{Frontend:}
+    \begin{itemize}
+        \item Jest: Unit testing framework
+        \item React Testing Library: Component testing
+        \item Cypress: E2E testing
+    \end{itemize}
+    \item \textbf{Backend:}
+    \begin{itemize}
+        \item JUnit 5: Unit testing framework
+        \item Mockito: Mocking framework
+        \item Spring Boot Test: Integration testing
+        \item MockMvc: HTTP endpoint testing
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Test Execution Strategy}
+\begin{enumerate}
+    \item \textbf{Pre-commit:} Run unit tests (fast feedback)
+    \item \textbf{CI Pipeline:} Run all tests automatically
+    \item \textbf{Pre-deployment:} Run full test suite including E2E
+    \item \textbf{Regression:} Run tests sau mỗi code change
+\end{enumerate}

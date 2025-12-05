@@ -16,8 +16,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
-    "eject": "react-scripts eject",
-    "e2e": "cypress open"
+    "test:e2e": "cypress run",
+    "eject": "react-scripts eject"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
