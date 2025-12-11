@@ -171,16 +171,14 @@ public class AuthControllerIntegrationTest {
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
                 .andExpect(header().string("Access-Control-Allow-Methods", containsString("POST")));
     }
-@Test
- void  testCORSHeaders_POST()  throws  Exception {
-	mockMvc.perform(post("/api/auth/login")
-	.contentType(MediaType.APPLICATION_JSON)
-	.header("Origin", "http://localhost:3000")
-	.header("Access-Control-Request-Method",  "POST")
-	.header("Access-Control-Request-Headers",  "content-type")
-	.content(objectMapper.writeValueAsString(new LoginRequest("admin123", "admin123"))))
-	.andExpect(status().isOk());
-
- }
-
+    @Test
+     void  testCORSHeaders_POST()  throws  Exception {
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Origin", "http://localhost:3000")
+                .header("Access-Control-Request-Method",  "POST")
+                .header("Access-Control-Request-Headers",  "content-type")
+                .content(objectMapper.writeValueAsString(new LoginRequest("admin123", "admin123"))))
+            .andExpect(status().isOk());
+     }
 }
