@@ -31,29 +31,21 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private PasswordEncoder passwordEncoder;
-
     @Mock
     private AuthenticationManager authenticationManager;
-
     @Mock
     private JwtUtils jwtUtils;
-
     @Mock
     private Authentication authentication;
-
     @InjectMocks
     private AuthService authService;
-
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
     private User user;
-
     @BeforeEach
     void setUp() {
         registerRequest = new RegisterRequest();
@@ -61,11 +53,9 @@ class AuthServiceTest {
         registerRequest.setPassword("password123");
         registerRequest.setEmail("test@example.com");
         registerRequest.setFullName("Test User");
-
         loginRequest = new LoginRequest();
         loginRequest.setUsername("testuser");
         loginRequest.setPassword("password123");
-
         user = new User();
         user.setId(1L);
         user.setUsername("testuser");
@@ -84,10 +74,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtils.generateToken(anyString())).thenReturn("fake-jwt-token");
-
         // Act
         AuthResponse response = authService.register(registerRequest);
-
         // Assert
         assertNotNull(response);
         assertEquals("fake-jwt-token", response.getToken());
@@ -95,7 +83,6 @@ class AuthServiceTest {
         assertEquals("testuser", response.getUsername());
         assertEquals("test@example.com", response.getEmail());
         assertEquals("USER", response.getRole());
-
         verify(userRepository).existsByUsername("testuser");
         verify(userRepository).existsByEmail("test@example.com");
         verify(userRepository).save(any(User.class));
@@ -106,12 +93,10 @@ class AuthServiceTest {
     void testRegister_UsernameExists() {
         // Arrange
         when(userRepository.existsByUsername(anyString())).thenReturn(true);
-
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             authService.register(registerRequest);
         });
-
         assertEquals("Username đã tồn tại!", exception.getMessage());
         verify(userRepository).existsByUsername("testuser");
         verify(userRepository, never()).save(any(User.class));
