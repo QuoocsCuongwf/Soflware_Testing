@@ -203,10 +203,10 @@ Data Sent & 2.1 MB (5.5 KB/s) \\
 \begin{itemize}
     \item $\checkmark$ Status is 200: 99.27\% (10,473 pass / 77 fail)
     \item $\checkmark$ Login successful: 99.27\% (10,473 pass / 77 fail)
-    \item ⚠️ Threshold violations:
+    \item \textbf{Threshold violations:}
     \begin{itemize}
-        \item ✗ \texttt{http\_req\_duration p(95)<2000ms}: FAILED (51.93s > 2s)
-        \item ✓ \texttt{http\_req\_failed rate<0.01}: PASSED (0.72\%)
+        \item $\times$ \texttt{http\_req\_duration p(95)<2000ms}: FAILED (51.93s > 2s)
+        \item $\checkmark$ \texttt{http\_req\_failed rate<0.01}: PASSED (0.72\%)
     \end{itemize}
 \end{itemize}
 
@@ -364,12 +364,23 @@ npm start
     \item Input validation truoc khi xu ly
 \end{itemize}
 
-% PLACEHOLDER: Them screenshot ZAP SQL Injection scan
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.85\textwidth]{images/zap/sql-injection-test.png}
-% \caption{ZAP SQL Injection Scan Results}
-% \end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/SQLi/SQL1.png}
+\caption{SQL Injection Test - Username Field Attack}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/SQLi/SQL2.png}
+\caption{SQL Injection Test - Product Search Attack}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/SQLi/SLQ3.png}
+\caption{SQL Injection Test - ZAP Scan Results}
+\end{figure}
 
 \textbf{2. Cross-Site Scripting (XSS) Testing}
 
@@ -397,6 +408,24 @@ Username & <svg onload=alert(1)> & Validation error \\
     \item Content-Type headers dung
 \end{itemize}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/XSS/XSS1.png}
+\caption{XSS Test - Script Tag Injection Attempt}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/XSS/XSS2.png}
+\caption{XSS Test - Image Tag with onerror Handler}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/XSS/XSS3.png}
+\caption{XSS Test - ZAP Active Scan Results}
+\end{figure}
+
 \textbf{3. CSRF (Cross-Site Request Forgery) Testing}
 
 \begin{table}[H]
@@ -423,6 +452,18 @@ DELETE /api/products/\{id\} & JWT token required & PROTECTED \\
     \item Spring Security CSRF protection enabled
 \end{itemize}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/CSRF/csrf1.png}
+\caption{CSRF Test - Token Required for State-Changing Operations}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/CSRF/csrf3.png}
+\caption{CSRF Protection - ZAP Security Headers Check}
+\end{figure}
+
 \textbf{4. Authentication Bypass Attempts}
 
 \begin{table}[H]
@@ -446,10 +487,23 @@ Brute force login (10+ attempts) & Rate limiting N/A & IMPROVE \\
 
 % PLACEHOLDER: Them screenshot ZAP authentication test
 % \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.85\textwidth]{images/zap/auth-bypass-test.png}
-% \caption{ZAP Authentication Bypass Test}
-% \end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/PASSWWORD/password1.png}
+\caption{Password Security - BCrypt Hashing Implementation}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/PASSWWORD/password2.png}
+\caption{Authentication Flow - JWT Token Validation}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/PASSWWORD/password3.png}
+\caption{Authorization Check - Protected Endpoints}
+\end{figure}
 
 \subsubsection{b) Input Validation va Sanitization (3 diem)}
 
@@ -509,7 +563,31 @@ Quantity & Integer, positive & @Min & PASS \\
 \caption{Input Validation Coverage}
 \end{table}
 
-\subsubsection{c) Security Best Practices (2 diem)}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Test unput/input1.png}
+\caption{Input Validation - Username Field Tests}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Test unput/input2.png}
+\caption{Input Validation - Password Field Tests}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Test unput/input3.png}
+\caption{Input Validation - Product Price Tests}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Test unput/input4.png}
+\caption{Input Validation - Backend Bean Validation}
+\end{figure}
+
+\subsubsection{c) Security Best Practices Implementation (2 diem)}
 
 \textbf{1. Password Hashing}
 \begin{lstlisting}[language=Java]
@@ -557,6 +635,24 @@ http.headers()
     \item Signature algorithm: HS256
     \item Token stored in localStorage (frontend)
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Header/header1.png}
+\caption{Security Headers Configuration - XSS Protection and CSP}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Header/header2.png}
+\caption{HTTP Security Headers - Frame Options and Content Type}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/zap/Cors/cor.png}
+\caption{CORS Configuration - Cross-Origin Resource Sharing Settings}
+\end{figure}
 
 \subsubsection{Ket qua Security Scan Tong hop}
 

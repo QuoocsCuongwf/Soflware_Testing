@@ -34,4 +34,4 @@ jobs:
 
       # E2E login với Cypress
       - name: Run Login E2E tests (Cypress)
-        run: npm run test:e2e -- --spec "cypress/e2e/login.e2e.spec.cy.js"
+        run: npm run test:e2e
